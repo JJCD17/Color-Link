@@ -38,7 +38,7 @@ class GameBoardState extends State<GameBoard> {
     final totalTiles = gridSizeRow * gridSizeCol;
 
     // Asegúrate que el número total de cuadros es par
-    assert(totalTiles % 2 == 0, 'El número total de cuadros debe ser par');
+    (totalTiles % 2 == 0, 'El número total de cuadros debe ser par');
 
     final random = Random();
     final List<Color> pairedColors = [];
@@ -161,11 +161,13 @@ class GameBoardState extends State<GameBoard> {
                                         });
 
                                         if (selectedPoints.length == 2) {
-                                          final sameColor =
-                                              selectedPoints[0].color ==
-                                              selectedPoints[1].color;
+                                          final p1 = selectedPoints[0];
+                                          final p2 = selectedPoints[1];
 
-                                          if (sameColor) {
+                                          // Solo procede si no son el mismo punto
+                                          if (p1 != p2 &&
+                                              p1.color == p2.color) {
+                                            // Coinciden y son distintos
                                             Future.delayed(
                                               const Duration(milliseconds: 150),
                                               () {
@@ -176,16 +178,14 @@ class GameBoardState extends State<GameBoard> {
                                                   }
                                                 });
 
-                                                // Esperar que la animación termine antes de limpiar
                                                 Future.delayed(
                                                   const Duration(
-                                                    milliseconds: 400,
+                                                    milliseconds: 200,
                                                   ),
                                                   () {
                                                     setState(() {
                                                       selectedPoints.clear();
 
-                                                      // Revisar si ya no queda ningún punto visible
                                                       final anyVisible = grid
                                                           .any(
                                                             (row) => row.any(
@@ -196,7 +196,10 @@ class GameBoardState extends State<GameBoard> {
                                                           );
 
                                                       if (!anyVisible) {
-                                                        _generateGrid(); // genera nuevos colores
+                                                        _generateGrid();
+                                                        // Premio por terminar un tablero
+                                                        timerKey.currentState
+                                                            ?.addTime();
                                                       }
                                                     });
                                                   },
@@ -204,9 +207,9 @@ class GameBoardState extends State<GameBoard> {
                                               },
                                             );
                                           } else {
-                                            print('No coinciden');
+                                            // No coinciden o es el mismo cuadro
                                             Future.delayed(
-                                              const Duration(milliseconds: 350),
+                                              const Duration(milliseconds: 150),
                                               () {
                                                 setState(() {
                                                   for (var point
@@ -214,6 +217,9 @@ class GameBoardState extends State<GameBoard> {
                                                     point.isSelected = false;
                                                   }
                                                   selectedPoints.clear();
+                                                  // Penalización por equivocarse
+                                                  timerKey.currentState
+                                                      ?.subtractTime(2);
                                                 });
                                               },
                                             );

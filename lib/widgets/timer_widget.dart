@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 
 class TimerWidget extends StatefulWidget {
   final int initialTime;
@@ -27,6 +28,7 @@ class TimerWidgetState extends State<TimerWidget> {
     currentTime = widget.initialTime;
   }
 
+  //funcion que inicia el timer
   void startTimer() {
     timer?.cancel(); // Cancela el timer anterior si existe
     currentTime = widget.initialTime; // Reinicia el tiempo
@@ -37,6 +39,18 @@ class TimerWidgetState extends State<TimerWidget> {
         timer.cancel();
         widget.onTimeUp();
       }
+    });
+  }
+
+  //funcion que suma 20 segundos al tiempo actual
+  void addTime() {
+    setState(() => currentTime += 20);
+  }
+
+  //funcion que resta 2 segundos al tiempo actual
+  void subtractTime(int seconds) {
+    setState(() {
+      currentTime = max(0, currentTime - seconds);
     });
   }
 
