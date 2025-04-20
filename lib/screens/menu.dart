@@ -4,24 +4,66 @@ import '../widgets/game_board.dart';
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
-  void navigateToGame(
-    BuildContext context,
-    String levelName,
-    int rows,
-    int cols,
-    int initialTime,
-    int level,
-  ) {
+  // Datos de los niveles
+  final List<Map<String, dynamic>> levels = const [
+    {
+      'name': 'Fácil',
+      'rows': 4,
+      'cols': 3,
+      'time': 35,
+      'level': 1,
+      'color': Colors.green,
+      'icon': Icons.accessible_forward,
+    },
+    {
+      'name': 'Medio',
+      'rows': 5,
+      'cols': 4,
+      'time': 30,
+      'level': 2,
+      'color': Colors.blue,
+      'icon': Icons.directions_run,
+    },
+    {
+      'name': 'Difícil',
+      'rows': 6,
+      'cols': 4,
+      'time': 25,
+      'level': 3,
+      'color': Colors.orange,
+      'icon': Icons.fitness_center,
+    },
+    {
+      'name': 'Extremo',
+      'rows': 6,
+      'cols': 5,
+      'time': 20,
+      'level': 4,
+      'color': Colors.red,
+      'icon': Icons.whatshot,
+    },
+    {
+      'name': 'Legendario',
+      'rows': 6,
+      'cols': 6,
+      'time': 18,
+      'level': 5,
+      'color': Colors.purple,
+      'icon': Icons.crisis_alert,
+    },
+  ];
+
+  void navigateToGame(BuildContext context, Map<String, dynamic> level) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (_) => GameBoard(
-              gridSizeRow: rows,
-              gridSizeCol: cols,
-              initialTime: initialTime,
-              level: level,
-              levelName: levelName,
+              gridSizeRow: level['rows'],
+              gridSizeCol: level['cols'],
+              initialTime: level['time'],
+              level: level['level'],
+              levelName: level['name'],
             ),
       ),
     );
@@ -30,48 +72,85 @@ class MenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Selecciona Nivel'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Selecciona Nivel'),
+        backgroundColor: Colors.black,
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            levelButton(context, 'Fácil', 4, 3, 30, 1),
-            levelButton(context, 'Medio', 6, 3, 25, 2),
-            levelButton(context, 'Difícil', 6, 4, 20, 3),
-            levelButton(context, 'Extremo', 6, 4, 15, 4),
+            const SizedBox(height: 30),
+            Expanded(
+              child: ListView.separated(
+                itemCount: levels.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 15),
+                itemBuilder: (context, index) {
+                  final level = levels[index];
+                  return _LevelCard(
+                    level: level,
+                    onPressed: () => navigateToGame(context, level),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget levelButton(
-    BuildContext context,
-    String text,
-    int rows,
-    int cols,
-    int time,
-    int level,
-  ) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed:
-                () => navigateToGame(context, text, rows, cols, time, level),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueGrey,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+class _LevelCard extends StatelessWidget {
+  final Map<String, dynamic> level;
+  final VoidCallback onPressed;
+
+  const _LevelCard({required this.level, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: level['color'].withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(level['icon'], color: level['color'], size: 30),
               ),
-            ),
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 20, color: Colors.white),
-            ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      level['name'],
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Tablero: ${level['rows']}x${level['cols']} | '
+                      'Tiempo: ${level['time']} seg',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
