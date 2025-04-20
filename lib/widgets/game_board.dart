@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 
 import 'package:flutter/material.dart';
 import 'timer_widget.dart';
@@ -46,6 +47,14 @@ class GameBoardState extends State<GameBoard> {
     super.initState();
     scoreManager = ScoreManager();
     _generateGrid();
+
+    // Inicia automáticamente después de 3 segundos
+    Future.delayed(Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() => gameStarted = true);
+        timerKey.currentState?.startTimer();
+      }
+    });
   }
 
   void _generateGrid() {
@@ -108,7 +117,8 @@ class GameBoardState extends State<GameBoard> {
       appBar: AppBar(
         title: Text(widget.levelName),
         centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 36, 36, 36),
+        backgroundColor: Colors.black,
+
         titleTextStyle: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
@@ -171,26 +181,70 @@ class GameBoardState extends State<GameBoard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
 
               //Tablero
               Expanded(
                 child:
                     !gameStarted
-                        ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'El tablero se genera al comenzar el nivel \n${widget.levelName} (${widget.gridSizeRow}x${widget.gridSizeCol}) con tiempo inicial de ${widget.initialTime} segundos',
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 10),
-                          ],
+                        ? LayoutBuilder(
+                          builder: (context, constraints) {
+                            // Calculamos el tamaño máximo disponible
+                            final maxWidth =
+                                constraints.maxWidth -
+                                40; // Restamos los márgenes
+                            final maxHeight = constraints.maxHeight - 40;
+
+                            // Calculamos el tamaño de celda basado en la proporción real
+                            final cellWidth = maxWidth / widget.gridSizeCol;
+                            final cellHeight = maxHeight / widget.gridSizeRow;
+                            final cellSize = min(cellWidth, cellHeight);
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Tablero vacío
+                                GridView.count(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  crossAxisCount: widget.gridSizeCol,
+                                  children: List.generate(
+                                    widget.gridSizeRow * widget.gridSizeCol,
+                                    (index) => Container(
+                                      margin: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.3),
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Countdown timer
+                                CircularCountDownTimer(
+                                  duration: 5,
+                                  width: 120,
+                                  height: 120,
+                                  ringColor: Colors.grey[800]!,
+                                  fillColor: Colors.blueAccent,
+                                  backgroundColor: Colors.black.withOpacity(
+                                    0.7,
+                                  ),
+                                  strokeWidth: 8,
+                                  textStyle: TextStyle(
+                                    fontSize: 30,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  isReverse: true,
+                                  onComplete: () {
+                                    setState(() => gameStarted = true);
+                                    timerKey.currentState?.startTimer();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
                         )
                         : Center(
                           child: Column(
@@ -309,35 +363,6 @@ class GameBoardState extends State<GameBoard> {
                           ),
                         ),
               ),
-
-              const SizedBox(height: 10),
-              if (!gameStarted)
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      gameStarted = true;
-                      selectedPoints.clear();
-                      _generateGrid();
-                      scoreManager.reset();
-                    });
-                    timerKey.currentState?.startTimer();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Iniciar partida',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ),
-              const SizedBox(height: 10),
             ],
           );
         },
