@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/game_board.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -10,7 +11,7 @@ class MenuScreen extends StatelessWidget {
       'name': 'Fácil',
       'rows': 4,
       'cols': 3,
-      'time': 35,
+      'time': 20,
       'level': 1,
       'color': Colors.green,
       'icon': Icons.accessible_forward,
@@ -28,7 +29,7 @@ class MenuScreen extends StatelessWidget {
       'name': 'Difícil',
       'rows': 6,
       'cols': 4,
-      'time': 25,
+      'time': 35,
       'level': 3,
       'color': Colors.orange,
       'icon': Icons.fitness_center,
@@ -37,7 +38,7 @@ class MenuScreen extends StatelessWidget {
       'name': 'Extremo',
       'rows': 6,
       'cols': 5,
-      'time': 20,
+      'time': 40,
       'level': 4,
       'color': Colors.red,
       'icon': Icons.whatshot,
@@ -46,10 +47,10 @@ class MenuScreen extends StatelessWidget {
       'name': 'Legendario',
       'rows': 6,
       'cols': 6,
-      'time': 18,
+      'time': 45,
       'level': 5,
       'color': Colors.purple,
-      'icon': Icons.crisis_alert,
+      'icon': FontAwesomeIcons.skull,
     },
   ];
 
@@ -57,14 +58,13 @@ class MenuScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (_) => GameBoard(
-              gridSizeRow: level['rows'],
-              gridSizeCol: level['cols'],
-              initialTime: level['time'],
-              level: level['level'],
-              levelName: level['name'],
-            ),
+        builder: (_) => GameBoard(
+          gridSizeRow: level['rows'],
+          gridSizeCol: level['cols'],
+          initialTime: level['time'],
+          level: level['level'],
+          levelName: level['name'],
+        ),
       ),
     );
   }
