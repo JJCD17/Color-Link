@@ -19,6 +19,9 @@ class ScoreManager {
       case 4: //Extremo
         score += 22;
         break;
+      case 5: //Legendario
+        score += 25;
+        break;
       default:
         score += 0;
         break;
@@ -38,6 +41,9 @@ class ScoreManager {
         break;
       case 4:
         score -= 11;
+        break;
+      case 5: //Legendario
+        score += 15;
         break;
       default:
         score -= 0;
