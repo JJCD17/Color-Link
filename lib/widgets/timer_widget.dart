@@ -43,8 +43,30 @@ class TimerWidgetState extends State<TimerWidget> {
   }
 
   //funcion que suma 20 segundos al tiempo actual
-  void addTime() {
-    setState(() => currentTime += 20);
+  void addTimeByLevel(int level) {
+    int extraTime;
+
+    switch (level) {
+      case 1: // Fácil
+        extraTime = 20;
+        break;
+      case 2: // Medio
+        extraTime = 18;
+        break;
+      case 3: // Difícil
+        extraTime = 15;
+        break;
+      case 4: // Extremo
+        extraTime = 12;
+        break;
+      case 5: // Legendario
+        extraTime = 5;
+        break;
+      default:
+        extraTime = 15;
+    }
+
+    setState(() => currentTime += extraTime);
   }
 
   //funcion que resta 2 segundos al tiempo actual
