@@ -11,7 +11,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PUZZLE COLOR',
-      theme: ThemeData.dark(),
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color.fromARGB(255, 36, 36, 36),
+      ),
       home: const MenuScreen(),
       debugShowCheckedModeBanner: false,
     );
