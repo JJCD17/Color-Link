@@ -97,17 +97,16 @@ class GameBoardState extends State<GameBoard> {
     });
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text("¡Tiempo agotado!"),
-            content: Text("Tu puntuación: ${scoreManager.score} puntos"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Aceptar"),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text("¡Tiempo agotado!"),
+        content: Text("Tu puntuación: ${scoreManager.score} puntos"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context),
+            child: const Text("Aceptar"),
           ),
+        ],
+      ),
     );
   }
 
@@ -118,7 +117,6 @@ class GameBoardState extends State<GameBoard> {
         title: Text(widget.levelName),
         centerTitle: true,
         backgroundColor: Colors.black,
-
         titleTextStyle: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
@@ -141,18 +139,19 @@ class GameBoardState extends State<GameBoard> {
 
           return Column(
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 30),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(width: 10),
                   TimerWidget(
                     //Timer
                     key: timerKey,
                     initialTime: widget.initialTime,
                     onTimeUp: _handleTimeUp,
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 10),
                   Container(
                     //Sistema de puntos
                     padding: const EdgeInsets.symmetric(
@@ -184,184 +183,182 @@ class GameBoardState extends State<GameBoard> {
 
               //Tablero
               Expanded(
-                child:
-                    !gameStarted
-                        ? LayoutBuilder(
-                          builder: (context, constraints) {
-                            // Calculamos el tamaño máximo disponible
-                            final maxWidth =
-                                constraints.maxWidth -
-                                40; // Restamos los márgenes
-                            final maxHeight = constraints.maxHeight - 40;
+                child: !gameStarted
+                    ? LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Calculamos el tamaño máximo disponible
+                          final maxWidth = constraints.maxWidth -
+                              40; // Restamos los márgenes
+                          final maxHeight = constraints.maxHeight - 40;
 
-                            // Calculamos el tamaño de celda basado en la proporción real
-                            final cellWidth = maxWidth / widget.gridSizeCol;
-                            final cellHeight = maxHeight / widget.gridSizeRow;
-                            final cellSize = min(cellWidth, cellHeight);
-                            return Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Tablero vacío
-                                GridView.count(
-                                  shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  crossAxisCount: widget.gridSizeCol,
-                                  children: List.generate(
-                                    widget.gridSizeRow * widget.gridSizeCol,
-                                    (index) => Container(
-                                      margin: EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: Colors.grey.withOpacity(0.3),
-                                        ),
-                                        borderRadius: BorderRadius.circular(4),
+                          // Calculamos el tamaño de celda basado en la proporción real
+                          final cellWidth = maxWidth / widget.gridSizeCol;
+                          final cellHeight = maxHeight / widget.gridSizeRow;
+                          final cellSize = min(cellWidth, cellHeight);
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Tablero vacío
+                              GridView.count(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                crossAxisCount: widget.gridSizeCol,
+                                children: List.generate(
+                                  widget.gridSizeRow * widget.gridSizeCol,
+                                  (index) => Container(
+                                    margin: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.grey.withOpacity(0.3),
                                       ),
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                   ),
                                 ),
+                              ),
 
-                                // Countdown timer
-                                CircularCountDownTimer(
-                                  duration: 5,
-                                  width: 120,
-                                  height: 120,
-                                  ringColor: Colors.grey[800]!,
-                                  fillColor: Colors.blueAccent,
-                                  backgroundColor: Colors.black.withOpacity(
-                                    0.7,
-                                  ),
-                                  strokeWidth: 8,
-                                  textStyle: TextStyle(
-                                    fontSize: 30,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  isReverse: true,
-                                  onComplete: () {
-                                    setState(() => gameStarted = true);
-                                    timerKey.currentState?.startTimer();
-                                  },
+                              // Countdown timer
+                              CircularCountDownTimer(
+                                duration: 5,
+                                width: 120,
+                                height: 120,
+                                ringColor: Colors.grey[800]!,
+                                fillColor: Colors.blueAccent,
+                                backgroundColor: Colors.black.withOpacity(
+                                  0.7,
                                 ),
-                              ],
-                            );
-                          },
-                        )
-                        : Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(widget.gridSizeRow, (row) {
-                              return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(widget.gridSizeCol, (
-                                  col,
-                                ) {
-                                  return SizedBox(
-                                    width: cellSize,
-                                    height: cellSize,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        final tappedPoint = grid[row][col];
-                                        if (tappedPoint.isSelected) {
-                                          setState(() {
-                                            tappedPoint.isSelected = false;
-                                            selectedPoints.remove(tappedPoint);
-                                          });
-                                          return;
-                                        }
+                                strokeWidth: 8,
+                                textStyle: TextStyle(
+                                  fontSize: 30,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                isReverse: true,
+                                onComplete: () {
+                                  setState(() => gameStarted = true);
+                                  timerKey.currentState?.startTimer();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(widget.gridSizeRow, (row) {
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(widget.gridSizeCol, (
+                                col,
+                              ) {
+                                return SizedBox(
+                                  width: cellSize,
+                                  height: cellSize,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      final tappedPoint = grid[row][col];
+                                      if (tappedPoint.isSelected) {
+                                        setState(() {
+                                          tappedPoint.isSelected = false;
+                                          selectedPoints.remove(tappedPoint);
+                                        });
+                                        return;
+                                      }
 
-                                        if (selectedPoints.length < 2) {
-                                          setState(() {
-                                            tappedPoint.isSelected = true;
-                                            selectedPoints.add(tappedPoint);
-                                          });
+                                      if (selectedPoints.length < 2) {
+                                        setState(() {
+                                          tappedPoint.isSelected = true;
+                                          selectedPoints.add(tappedPoint);
+                                        });
 
-                                          if (selectedPoints.length == 2) {
-                                            final p1 = selectedPoints[0];
-                                            final p2 = selectedPoints[1];
+                                        if (selectedPoints.length == 2) {
+                                          final p1 = selectedPoints[0];
+                                          final p2 = selectedPoints[1];
 
-                                            if (p1 != p2 &&
-                                                p1.color == p2.color) {
-                                              //Se encontro par
-                                              scoreManager.addPoints(
-                                                level: widget.level,
-                                              );
-                                              Future.delayed(
-                                                const Duration(
-                                                  milliseconds: 150,
-                                                ),
-                                                () {
-                                                  setState(() {
-                                                    for (var point
-                                                        in selectedPoints) {
-                                                      point.isVisible = false;
-                                                    }
-                                                  });
+                                          if (p1 != p2 &&
+                                              p1.color == p2.color) {
+                                            //Se encontro par
+                                            scoreManager.addPoints(
+                                              level: widget.level,
+                                            );
+                                            Future.delayed(
+                                              const Duration(
+                                                milliseconds: 150,
+                                              ),
+                                              () {
+                                                setState(() {
+                                                  for (var point
+                                                      in selectedPoints) {
+                                                    point.isVisible = false;
+                                                  }
+                                                });
 
-                                                  Future.delayed(
-                                                    const Duration(
-                                                      milliseconds: 200,
-                                                    ),
-                                                    () {
-                                                      setState(() {
-                                                        selectedPoints.clear();
+                                                Future.delayed(
+                                                  const Duration(
+                                                    milliseconds: 200,
+                                                  ),
+                                                  () {
+                                                    setState(() {
+                                                      selectedPoints.clear();
 
-                                                        final anyVisible = grid
-                                                            .any(
-                                                              (row) => row.any(
-                                                                (point) =>
-                                                                    point
-                                                                        .isVisible,
-                                                              ),
-                                                            );
+                                                      final anyVisible =
+                                                          grid.any(
+                                                        (row) => row.any(
+                                                          (point) =>
+                                                              point.isVisible,
+                                                        ),
+                                                      );
 
-                                                        if (!anyVisible) {
-                                                          _generateGrid();
-                                                          timerKey.currentState
-                                                              ?.addTime();
-                                                        }
-                                                      });
-                                                    },
-                                                  );
-                                                },
-                                              );
-                                            } else {
-                                              //Fallo al encontrar el par
-                                              scoreManager.subtractPoints(
-                                                widget.level,
-                                              );
-                                              Future.delayed(
-                                                const Duration(
-                                                  milliseconds: 150,
-                                                ),
-                                                () {
-                                                  setState(() {
-                                                    for (var point
-                                                        in selectedPoints) {
-                                                      point.isSelected = false;
-                                                    }
-                                                    selectedPoints.clear();
-                                                    timerKey.currentState
-                                                        ?.subtractTime(2);
-                                                  });
-                                                },
-                                              );
-                                            }
+                                                      if (!anyVisible) {
+                                                        _generateGrid();
+                                                        timerKey.currentState
+                                                            ?.addTimeByLevel(
+                                                                widget.level);
+                                                      }
+                                                    });
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          } else {
+                                            //Fallo al encontrar el par
+                                            scoreManager.subtractPoints(
+                                              widget.level,
+                                            );
+                                            Future.delayed(
+                                              const Duration(
+                                                milliseconds: 150,
+                                              ),
+                                              () {
+                                                setState(() {
+                                                  for (var point
+                                                      in selectedPoints) {
+                                                    point.isSelected = false;
+                                                  }
+                                                  selectedPoints.clear();
+                                                  timerKey.currentState
+                                                      ?.subtractTime(2);
+                                                });
+                                              },
+                                            );
                                           }
                                         }
-                                      },
-                                      child: PointTile(
-                                        color: grid[row][col].color,
-                                        isSelected: grid[row][col].isSelected,
-                                        isVisible: grid[row][col].isVisible,
-                                        gameStarted: gameStarted,
-                                      ),
+                                      }
+                                    },
+                                    child: PointTile(
+                                      color: grid[row][col].color,
+                                      isSelected: grid[row][col].isSelected,
+                                      isVisible: grid[row][col].isVisible,
+                                      gameStarted: gameStarted,
                                     ),
-                                  );
-                                }),
-                              );
-                            }),
-                          ),
+                                  ),
+                                );
+                              }),
+                            );
+                          }),
                         ),
+                      ),
               ),
             ],
           );
