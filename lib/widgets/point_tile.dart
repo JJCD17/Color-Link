@@ -17,7 +17,7 @@ class PointTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 100),
       opacity: isVisible && gameStarted ? 1.0 : 0.0,
       child: Container(
         margin: const EdgeInsets.all(2),
