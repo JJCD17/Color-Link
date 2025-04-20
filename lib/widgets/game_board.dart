@@ -177,16 +177,20 @@ class GameBoardState extends State<GameBoard> {
               Expanded(
                 child:
                     !gameStarted
-                        ? const Center(
-                          child: Text(
-                            'El tablero se genera al iniciar la partida',
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.bold,
+                        ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'El tablero se genera al comenzar el nivel \n${widget.levelName} (${widget.gridSizeRow}x${widget.gridSizeCol}) con tiempo inicial de ${widget.initialTime} segundos',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
+                            SizedBox(height: 10),
+                          ],
                         )
                         : Center(
                           child: Column(
