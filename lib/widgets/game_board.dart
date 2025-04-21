@@ -185,7 +185,7 @@ class GameBoardState extends State<GameBoard> {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.orange.withOpacity(0.4),
+                            color: Colors.orange.withValues(),
                             blurRadius: 8,
                             offset: Offset(0, 3),
                           ),
@@ -223,15 +223,6 @@ class GameBoardState extends State<GameBoard> {
                 child: !gameStarted
                     ? LayoutBuilder(
                         builder: (context, constraints) {
-                          // Calculamos el tamaño máximo disponible
-                          final maxWidth = constraints.maxWidth -
-                              40; // Restamos los márgenes
-                          final maxHeight = constraints.maxHeight - 40;
-
-                          // Calculamos el tamaño de celda basado en la proporción real
-                          final cellWidth = maxWidth / widget.gridSizeCol;
-                          final cellHeight = maxHeight / widget.gridSizeRow;
-                          final cellSize = min(cellWidth, cellHeight);
                           return Stack(
                             alignment: Alignment.center,
                             children: [
@@ -246,7 +237,7 @@ class GameBoardState extends State<GameBoard> {
                                     margin: EdgeInsets.all(2),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Colors.grey.withOpacity(0.3),
+                                        color: Colors.grey[800]!,
                                       ),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
@@ -261,9 +252,7 @@ class GameBoardState extends State<GameBoard> {
                                 height: 120,
                                 ringColor: Colors.grey[800]!,
                                 fillColor: Colors.blueAccent,
-                                backgroundColor: Colors.black.withOpacity(
-                                  0.7,
-                                ),
+                                backgroundColor: Colors.black38,
                                 strokeWidth: 8,
                                 textStyle: TextStyle(
                                   fontSize: 30,
