@@ -64,6 +64,8 @@ class MenuScreen extends StatelessWidget {
           initialTime: level['time'],
           level: level['level'],
           levelName: level['name'],
+          icon: level['icon'],
+          color: level['color'],
         ),
       ),
     );

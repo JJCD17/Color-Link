@@ -7,6 +7,8 @@ import '../models/point_data.dart';
 import 'point_tile.dart';
 import '../models/score_manager.dart';
 import 'dart:math';
+import '../models/game_stats_storage.dart';
+import '../screens/end_game.dart';
 
 class GameBoard extends StatefulWidget {
   final int gridSizeRow;
@@ -14,6 +16,8 @@ class GameBoard extends StatefulWidget {
   final int initialTime;
   final int level;
   final String levelName;
+  final IconData icon;
+  final Color color;
 
   const GameBoard({
     super.key,
@@ -22,6 +26,8 @@ class GameBoard extends StatefulWidget {
     required this.initialTime,
     required this.level,
     required this.levelName,
+    required this.icon,
+    required this.color,
   });
 
   @override
@@ -46,6 +52,7 @@ class GameBoardState extends State<GameBoard> {
   void initState() {
     super.initState();
     scoreManager = ScoreManager();
+    scoreManager.score = 999;
     _generateGrid();
 
     // Inicia automáticamente después de 3 segundos
@@ -92,22 +99,31 @@ class GameBoardState extends State<GameBoard> {
   }
 
   void _handleTimeUp() {
+    // Actualiza la variable que indica el estado del juego
     setState(() {
       gameStarted = false;
     });
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("¡Tiempo agotado!"),
-        content: Text("Tu puntuación: ${scoreManager.score} puntos"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context),
-            child: const Text("Aceptar"),
+
+    // Guardar la puntuación y el récord si aplica
+    GameStatsStorage().saveScoreForLevel(widget.level, scoreManager.score);
+
+    GameStatsStorage().saveLastLevelPlayed(widget.level);
+
+    // Navegar a la pantalla de fin de juego
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EndGameScreen(
+            level: widget.level,
+            levelName: widget.levelName,
+            score: scoreManager.score,
+            icon: widget.icon,
+            color: widget.color,
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    }
   }
 
   @override
@@ -140,45 +156,66 @@ class GameBoardState extends State<GameBoard> {
           return Column(
             children: [
               const SizedBox(height: 30),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 10),
-                  TimerWidget(
-                    //Timer
-                    key: timerKey,
-                    initialTime: widget.initialTime,
-                    onTimeUp: _handleTimeUp,
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    //Sistema de puntos
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 35, vertical: 15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 150,
+                      child: TimerWidget(
+                        key: timerKey,
+                        initialTime: widget.initialTime,
+                        onTimeUp: _handleTimeUp,
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star, color: Colors.yellow, size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${scoreManager.score}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    const SizedBox(width: 20),
+                    Container(
+                      width: 150, // Ancho fijo
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 15),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.amber.shade700,
+                            Colors.orange.shade400,
+                          ],
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // Centrado interno
+                        children: [
+                          const Icon(Icons.star, color: Colors.white, size: 24),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 60, // Espacio reservado para el número
+                            child: Text(
+                              '${scoreManager.score}'
+                                  .toString()
+                                  .padLeft(3, '0'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               //Tablero

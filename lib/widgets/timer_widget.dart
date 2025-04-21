@@ -87,22 +87,34 @@ class TimerWidgetState extends State<TimerWidget> {
     final isWarning = currentTime <= 5;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 15),
       decoration: BoxDecoration(
         color: Colors.black54,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.4),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.timer, color: Colors.white, size: 24),
           const SizedBox(width: 8),
-          Text(
-            '$currentTime',
-            style: TextStyle(
-              color: isWarning ? widget.warningColor : Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          SizedBox(
+            width: 30,
+            child: Text(
+              '$currentTime'.toString().padLeft(2, '0'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isWarning ? widget.warningColor : Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
