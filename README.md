@@ -1,4 +1,4 @@
-# PUZLE COLOR
+# PUZZLE COLOR
 
 A new Flutter project.
 
