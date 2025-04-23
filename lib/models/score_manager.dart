@@ -43,7 +43,7 @@ class ScoreManager {
         score -= 11;
         break;
       case 5: //Legendario
-        score += 15;
+        score -= 17;
         break;
       default:
         score -= 0;
