@@ -54,23 +54,6 @@ class MenuScreen extends StatelessWidget {
     },
   ];
 
-  void navigateToGame(BuildContext context, Map<String, dynamic> level) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GameBoard(
-          gridSizeRow: level['rows'],
-          gridSizeCol: level['cols'],
-          initialTime: level['time'],
-          level: level['level'],
-          levelName: level['name'],
-          icon: level['icon'],
-          color: level['color'],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,4 +141,22 @@ class _LevelCard extends StatelessWidget {
       ),
     );
   }
+}
+
+void navigateToGame(BuildContext context, Map<String, dynamic> level) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => GameBoard(
+        gridSizeRow: level['rows'],
+        gridSizeCol: level['cols'],
+        initialTime: level['time'],
+        level: level['level'],
+        levelName: level['name'],
+        icon: level['icon'],
+        color: level['color'],
+        time: level['time'],
+      ),
+    ),
+  );
 }

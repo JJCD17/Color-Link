@@ -8,6 +8,9 @@ class EndGameScreen extends StatefulWidget {
   final int score;
   final IconData icon;
   final Color color;
+  final int time;
+  final int rows;
+  final int cols;
 
   const EndGameScreen({
     super.key,
@@ -16,6 +19,9 @@ class EndGameScreen extends StatefulWidget {
     required this.score,
     required this.icon,
     required this.color,
+    required this.time,
+    required this.rows,
+    required this.cols,
   });
 
   @override
@@ -63,7 +69,17 @@ class _EndGameScreenState extends State<EndGameScreen> {
             Column(
               children: [
                 _buildActionButton("Intentar de nuevo", () {
-                  Navigator.pushReplacementNamed(context, '/juego');
+                  final levelData = {
+                    'level': widget.level,
+                    'name': widget.levelName,
+                    'icon': widget.icon,
+                    'color': widget.color,
+                    'time': widget.time,
+                    'rows': widget.rows,
+                    'cols': widget.cols,
+                  };
+
+                  navigateToGame(context, levelData);
                 }, Icons.replay, Colors.blue, isOutlined: true),
                 const SizedBox(height: 16),
                 _buildActionButton("Volver al menú", () {
@@ -86,7 +102,7 @@ class _EndGameScreenState extends State<EndGameScreen> {
       children: [
         CircleAvatar(
           radius: 30,
-          backgroundColor: widget.color.withOpacity(0.2),
+          backgroundColor: widget.color.withValues(alpha: 0.2),
           child: Icon(widget.icon, color: widget.color, size: 30),
         ),
         const SizedBox(height: 16),
@@ -116,9 +132,9 @@ class _EndGameScreenState extends State<EndGameScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         children: [

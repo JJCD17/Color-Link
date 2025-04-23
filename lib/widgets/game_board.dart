@@ -18,6 +18,7 @@ class GameBoard extends StatefulWidget {
   final String levelName;
   final IconData icon;
   final Color color;
+  final int time;
 
   const GameBoard({
     super.key,
@@ -28,6 +29,7 @@ class GameBoard extends StatefulWidget {
     required this.levelName,
     required this.icon,
     required this.color,
+    required this.time,
   });
 
   @override
@@ -52,7 +54,6 @@ class GameBoardState extends State<GameBoard> {
   void initState() {
     super.initState();
     scoreManager = ScoreManager();
-    scoreManager.score = 999;
     _generateGrid();
 
     // Inicia automáticamente después de 3 segundos
@@ -120,6 +121,9 @@ class GameBoardState extends State<GameBoard> {
             score: scoreManager.score,
             icon: widget.icon,
             color: widget.color,
+            time: widget.time,
+            rows: widget.gridSizeRow,
+            cols: widget.gridSizeCol,
           ),
         ),
       );
@@ -172,33 +176,28 @@ class GameBoardState extends State<GameBoard> {
                     ),
                     const SizedBox(width: 20),
                     Container(
+                      //Score
                       width: 150, // Ancho fijo
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 15),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.amber.shade700,
-                            Colors.orange.shade400,
-                          ],
-                        ),
+                        color: Colors.black54,
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.orange.withValues(),
+                            color: Colors.yellow.withValues(),
                             blurRadius: 8,
                             offset: Offset(0, 3),
                           ),
                         ],
                       ),
                       child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // Centrado interno
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.star, color: Colors.white, size: 24),
                           const SizedBox(width: 10),
                           SizedBox(
-                            width: 60, // Espacio reservado para el número
+                            width: 60,
                             child: Text(
                               '${scoreManager.score}'
                                   .toString()
@@ -248,14 +247,14 @@ class GameBoardState extends State<GameBoard> {
                               // Countdown timer
                               CircularCountDownTimer(
                                 duration: 5,
-                                width: 120,
-                                height: 120,
+                                width: 150,
+                                height: 150,
                                 ringColor: Colors.grey[800]!,
                                 fillColor: Colors.blueAccent,
                                 backgroundColor: Colors.black38,
                                 strokeWidth: 8,
                                 textStyle: TextStyle(
-                                  fontSize: 30,
+                                  fontSize: 50,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -269,21 +268,23 @@ class GameBoardState extends State<GameBoard> {
                           );
                         },
                       )
-                    : Center(
+                    : // Tablero
+                    Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: List.generate(widget.gridSizeRow, (row) {
                             return Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: List.generate(widget.gridSizeCol, (
-                                col,
-                              ) {
+                              children:
+                                  List.generate(widget.gridSizeCol, (col) {
                                 return SizedBox(
                                   width: cellSize,
                                   height: cellSize,
                                   child: GestureDetector(
                                     onTap: () {
                                       final tappedPoint = grid[row][col];
+
+                                      // Si el punto ya estaba seleccionado, se deselecciona
                                       if (tappedPoint.isSelected) {
                                         setState(() {
                                           tappedPoint.isSelected = false;
@@ -292,86 +293,85 @@ class GameBoardState extends State<GameBoard> {
                                         return;
                                       }
 
+                                      // Solo se pueden seleccionar un máximo de 2 puntos a la vez
                                       if (selectedPoints.length < 2) {
                                         setState(() {
                                           tappedPoint.isSelected = true;
                                           selectedPoints.add(tappedPoint);
                                         });
 
+                                        // Cuando hay 2 puntos seleccionados, se evalúan
                                         if (selectedPoints.length == 2) {
                                           final p1 = selectedPoints[0];
                                           final p2 = selectedPoints[1];
 
+                                          // Si los puntos son distintos y del mismo color
                                           if (p1 != p2 &&
                                               p1.color == p2.color) {
-                                            //Se encontro par
+                                            // Se encontró un par válido
                                             scoreManager.addPoints(
-                                              level: widget.level,
-                                            );
-                                            Future.delayed(
-                                              const Duration(
-                                                milliseconds: 150,
-                                              ),
-                                              () {
-                                                setState(() {
-                                                  for (var point
-                                                      in selectedPoints) {
-                                                    point.isVisible = false;
-                                                  }
-                                                });
+                                                level: widget.level);
 
-                                                Future.delayed(
+                                            // Pequeña espera antes de ocultar los puntos encontrados
+                                            Future.delayed(
+                                                const Duration(
+                                                    milliseconds: 100), () {
+                                              setState(() {
+                                                for (var point
+                                                    in selectedPoints) {
+                                                  point.isVisible = false;
+                                                }
+                                              });
+
+                                              // Pequeña espera adicional para limpiar selección
+                                              Future.delayed(
                                                   const Duration(
-                                                    milliseconds: 200,
-                                                  ),
-                                                  () {
-                                                    setState(() {
-                                                      selectedPoints.clear();
-
-                                                      final anyVisible =
-                                                          grid.any(
-                                                        (row) => row.any(
-                                                          (point) =>
-                                                              point.isVisible,
-                                                        ),
-                                                      );
-
-                                                      if (!anyVisible) {
-                                                        _generateGrid();
-                                                        timerKey.currentState
-                                                            ?.addTimeByLevel(
-                                                                widget.level);
-                                                      }
-                                                    });
-                                                  },
-                                                );
-                                              },
-                                            );
-                                          } else {
-                                            //Fallo al encontrar el par
-                                            scoreManager.subtractPoints(
-                                              widget.level,
-                                            );
-                                            Future.delayed(
-                                              const Duration(
-                                                milliseconds: 150,
-                                              ),
-                                              () {
+                                                      milliseconds: 150), () {
                                                 setState(() {
-                                                  for (var point
-                                                      in selectedPoints) {
-                                                    point.isSelected = false;
-                                                  }
                                                   selectedPoints.clear();
-                                                  timerKey.currentState
-                                                      ?.subtractTime(2);
+
+                                                  // Verifica si aún quedan puntos visibles
+                                                  final anyVisible = grid.any(
+                                                      (row) => row.any(
+                                                          (point) =>
+                                                              point.isVisible));
+
+                                                  if (!anyVisible) {
+                                                    // Si no quedan puntos, se genera nuevo tablero y se agrega tiempo
+                                                    _generateGrid();
+                                                    timerKey.currentState
+                                                        ?.addTimeByLevel(
+                                                            widget.level);
+                                                  }
                                                 });
-                                              },
-                                            );
+                                              });
+                                            });
+                                          } else {
+                                            // No son del mismo color o es el mismo punto
+                                            scoreManager
+                                                .subtractPoints(widget.level);
+
+                                            // Pequeña espera antes de deseleccionar y penalizar
+                                            Future.delayed(
+                                                const Duration(
+                                                    milliseconds: 150), () {
+                                              setState(() {
+                                                for (var point
+                                                    in selectedPoints) {
+                                                  point.isSelected = false;
+                                                }
+                                                selectedPoints.clear();
+                                                // Penalización de tiempo por error
+                                                timerKey.currentState
+                                                    ?.subtractTime(2);
+                                              });
+                                            });
                                           }
                                         }
                                       }
                                     },
+
+                                    // Widget que representa visualmente cada punto
                                     child: PointTile(
                                       color: grid[row][col].color,
                                       isSelected: grid[row][col].isSelected,

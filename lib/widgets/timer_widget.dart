@@ -42,25 +42,25 @@ class TimerWidgetState extends State<TimerWidget> {
     });
   }
 
-  //funcion que suma 20 segundos al tiempo actual
+  //funcion que suma segundos al tiempo actual
   void addTimeByLevel(int level) {
     int extraTime;
 
     switch (level) {
       case 1: // Fácil
-        extraTime = 20;
-        break;
-      case 2: // Medio
-        extraTime = 18;
-        break;
-      case 3: // Difícil
-        extraTime = 15;
-        break;
-      case 4: // Extremo
         extraTime = 12;
         break;
+      case 2: // Medio
+        extraTime = 10;
+        break;
+      case 3: // Difícil
+        extraTime = 8;
+        break;
+      case 4: // Extremo
+        extraTime = 6;
+        break;
       case 5: // Legendario
-        extraTime = 5;
+        extraTime = 4;
         break;
       default:
         extraTime = 15;
@@ -93,7 +93,7 @@ class TimerWidgetState extends State<TimerWidget> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.4),
+            color: Colors.blue.withValues(),
             blurRadius: 8,
             offset: Offset(0, 3),
           ),
@@ -106,7 +106,7 @@ class TimerWidgetState extends State<TimerWidget> {
           const Icon(Icons.timer, color: Colors.white, size: 24),
           const SizedBox(width: 8),
           SizedBox(
-            width: 30,
+            width: 40,
             child: Text(
               '$currentTime'.toString().padLeft(2, '0'),
               textAlign: TextAlign.center,
