@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class ScoreManager {
   int score = 0;
 
@@ -29,6 +31,7 @@ class ScoreManager {
   }
 
   void subtractPoints(int level) {
+    int pointsToSubtract = 0;
     switch (level) {
       case 1:
         score -= 5;
@@ -48,5 +51,7 @@ class ScoreManager {
       default:
         score -= 0;
     }
+    // Restar los puntos pero no permitir que el score sea negativo
+    score = max(0, score - pointsToSubtract);
   }
 }
