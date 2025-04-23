@@ -46,6 +46,11 @@ class _EndGameScreenState extends State<EndGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Resumen de partida'),
+        elevation: 0,
+      ),
       backgroundColor: const Color.fromARGB(255, 36, 36, 36),
       body: Container(
         width: double.infinity,
@@ -83,7 +88,7 @@ class _EndGameScreenState extends State<EndGameScreen> {
                 }, Icons.replay, Colors.blue, isOutlined: true),
                 const SizedBox(height: 16),
                 _buildActionButton("Volver al menú", () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => MenuScreen()),
                   );
@@ -116,13 +121,6 @@ class _EndGameScreenState extends State<EndGameScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          "Resumen de partida",
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 18,
-          ),
-        ),
       ],
     );
   }
