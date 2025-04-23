@@ -38,6 +38,7 @@ class GameBoard extends StatefulWidget {
 
 class GameBoardState extends State<GameBoard> {
   bool gameStarted = false;
+  bool isCountdownActive = true;
   final GlobalKey<TimerWidgetState> timerKey = GlobalKey<TimerWidgetState>();
   late ScoreManager scoreManager;
   late List<List<PointData>> grid;
@@ -183,17 +184,27 @@ class GameBoardState extends State<GameBoard> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _showExitConfirmation(context);
-        return false; // Evita que el botón físico retroceda directamente
+    return PopScope(
+      canPop:
+          !isCountdownActive, // Solo permite pop cuando no hay countdown activo
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (!didPop && !isCountdownActive) {
+          _showExitConfirmation(context);
+        }
       },
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => _showExitConfirmation(context),
-          ),
+          automaticallyImplyLeading: false,
+          leading: isCountdownActive
+              ? IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.grey[700]),
+                  onPressed: null,
+                  tooltip: 'Espera a que comience la partida',
+                )
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => _showExitConfirmation(context),
+                ),
           title: Text(
             widget.levelName,
           ),
@@ -322,7 +333,11 @@ class GameBoardState extends State<GameBoard> {
                                   ),
                                   isReverse: true,
                                   onComplete: () {
-                                    setState(() => gameStarted = true);
+                                    setState(() {
+                                      gameStarted = true;
+                                      isCountdownActive =
+                                          false; // Countdown terminó
+                                    });
                                     timerKey.currentState?.startTimer();
                                   },
                                 ),
