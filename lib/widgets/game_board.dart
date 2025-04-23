@@ -130,265 +130,328 @@ class GameBoardState extends State<GameBoard> {
     }
   }
 
+  void _showExitConfirmation(BuildContext context) {
+    timerKey.currentState?.pauseTimer();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber, color: Colors.orange),
+              SizedBox(width: 10),
+              Text('Partida en progreso'),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tienes una partida en curso.'),
+              SizedBox(height: 8),
+              Text('Si sales ahora:'),
+              SizedBox(height: 4),
+              Text('• Perderás el progreso actual',
+                  style: TextStyle(color: Colors.red)),
+              SizedBox(height: 4),
+              Text('• No se guardará tu puntuación',
+                  style: TextStyle(color: Colors.red)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Continuar jugando'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Reanudar el timer al continuar
+                timerKey.currentState?.resumeTimer();
+              },
+            ),
+            TextButton(
+              child: const Text('Salir de todas formas',
+                  style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+                Navigator.of(context).pop(true); // Sale del GameBoard
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.levelName),
-        centerTitle: true,
-        backgroundColor: Colors.black,
-        titleTextStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+    return WillPopScope(
+      onWillPop: () async {
+        _showExitConfirmation(context);
+        return false; // Evita que el botón físico retroceda directamente
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _showExitConfirmation(context),
+          ),
+          title: Text(
+            widget.levelName,
+          ),
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: widget.color,
+          ),
         ),
-      ),
-      backgroundColor: const Color.fromARGB(255, 36, 36, 36),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final totalHeight = constraints.maxHeight;
-          final totalWidth = constraints.maxWidth;
+        backgroundColor: const Color.fromARGB(255, 36, 36, 36),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final totalHeight = constraints.maxHeight;
+            final totalWidth = constraints.maxWidth;
 
-          final reservedHeight = 140.0;
-          final availableHeight = totalHeight - reservedHeight;
+            final reservedHeight = 140.0;
+            final availableHeight = totalHeight - reservedHeight;
 
-          final cellWidth = totalWidth / widget.gridSizeCol;
-          final cellHeight = availableHeight / widget.gridSizeRow;
+            final cellWidth = totalWidth / widget.gridSizeCol;
+            final cellHeight = availableHeight / widget.gridSizeRow;
 
-          final cellSize = min(cellHeight, cellWidth);
+            final cellSize = min(cellHeight, cellWidth);
 
-          return Column(
-            children: [
-              const SizedBox(height: 30),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 35, vertical: 15),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 150,
-                      child: TimerWidget(
-                        key: timerKey,
-                        initialTime: widget.initialTime,
-                        onTimeUp: _handleTimeUp,
+            return Column(
+              children: [
+                const SizedBox(height: 30),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 35, vertical: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 150,
+                        child: TimerWidget(
+                          key: timerKey,
+                          initialTime: widget.initialTime,
+                          onTimeUp: _handleTimeUp,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 20),
-                    Container(
-                      //Score
-                      width: 150, // Ancho fijo
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.yellow.withValues(),
-                            blurRadius: 8,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.star, color: Colors.white, size: 24),
-                          const SizedBox(width: 10),
-                          SizedBox(
-                            width: 60,
-                            child: Text(
-                              '${scoreManager.score}'
-                                  .toString()
-                                  .padLeft(3, '0'),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                      const SizedBox(width: 20),
+                      Container(
+                        //Score
+                        width: 150, // Ancho fijo
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.yellow.withValues(),
+                              blurRadius: 8,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.star,
+                                color: Colors.white, size: 24),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 60,
+                              child: Text(
+                                '${scoreManager.score}'
+                                    .toString()
+                                    .padLeft(3, '0'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              //Tablero
-              Expanded(
-                child: !gameStarted
-                    ? LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Tablero vacío
-                              GridView.count(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                crossAxisCount: widget.gridSizeCol,
-                                children: List.generate(
-                                  widget.gridSizeRow * widget.gridSizeCol,
-                                  (index) => Container(
-                                    margin: EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.grey[800]!,
+                //Tablero
+                Expanded(
+                  child: !gameStarted
+                      ? LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Tablero vacío
+                                GridView.count(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  crossAxisCount: widget.gridSizeCol,
+                                  children: List.generate(
+                                    widget.gridSizeRow * widget.gridSizeCol,
+                                    (index) => Container(
+                                      margin: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey[800]!,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
-                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                   ),
                                 ),
-                              ),
 
-                              // Countdown timer
-                              CircularCountDownTimer(
-                                duration: 5,
-                                width: 150,
-                                height: 150,
-                                ringColor: Colors.grey[800]!,
-                                fillColor: Colors.blueAccent,
-                                backgroundColor: Colors.black38,
-                                strokeWidth: 8,
-                                textStyle: TextStyle(
-                                  fontSize: 50,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                // Countdown timer
+                                CircularCountDownTimer(
+                                  duration: 5,
+                                  width: 150,
+                                  height: 150,
+                                  ringColor: Colors.grey[800]!,
+                                  fillColor: Colors.blueAccent,
+                                  backgroundColor: Colors.black38,
+                                  strokeWidth: 8,
+                                  textStyle: TextStyle(
+                                    fontSize: 50,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  isReverse: true,
+                                  onComplete: () {
+                                    setState(() => gameStarted = true);
+                                    timerKey.currentState?.startTimer();
+                                  },
                                 ),
-                                isReverse: true,
-                                onComplete: () {
-                                  setState(() => gameStarted = true);
-                                  timerKey.currentState?.startTimer();
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      )
-                    : // Tablero
-                    Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(widget.gridSizeRow, (row) {
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children:
-                                  List.generate(widget.gridSizeCol, (col) {
-                                return SizedBox(
-                                  width: cellSize,
-                                  height: cellSize,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      final tappedPoint = grid[row][col];
+                              ],
+                            );
+                          },
+                        )
+                      : // Tablero
+                      Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(widget.gridSizeRow, (row) {
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children:
+                                    List.generate(widget.gridSizeCol, (col) {
+                                  return SizedBox(
+                                    width: cellSize,
+                                    height: cellSize,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        final tappedPoint = grid[row][col];
 
-                                      // Si el punto ya estaba seleccionado, se deselecciona
-                                      if (tappedPoint.isSelected) {
-                                        setState(() {
-                                          tappedPoint.isSelected = false;
-                                          selectedPoints.remove(tappedPoint);
-                                        });
-                                        return;
-                                      }
+                                        // Si el punto ya estaba seleccionado, se deselecciona
+                                        if (tappedPoint.isSelected) {
+                                          setState(() {
+                                            tappedPoint.isSelected = false;
+                                            selectedPoints.remove(tappedPoint);
+                                          });
+                                          return;
+                                        }
 
-                                      // Solo se pueden seleccionar un máximo de 2 puntos a la vez
-                                      if (selectedPoints.length < 2) {
-                                        setState(() {
-                                          tappedPoint.isSelected = true;
-                                          selectedPoints.add(tappedPoint);
-                                        });
+                                        // Solo se pueden seleccionar un máximo de 2 puntos a la vez
+                                        if (selectedPoints.length < 2) {
+                                          setState(() {
+                                            tappedPoint.isSelected = true;
+                                            selectedPoints.add(tappedPoint);
+                                          });
 
-                                        // Cuando hay 2 puntos seleccionados, se evalúan
-                                        if (selectedPoints.length == 2) {
-                                          final p1 = selectedPoints[0];
-                                          final p2 = selectedPoints[1];
+                                          // Cuando hay 2 puntos seleccionados, se evalúan
+                                          if (selectedPoints.length == 2) {
+                                            final p1 = selectedPoints[0];
+                                            final p2 = selectedPoints[1];
 
-                                          // Si los puntos son distintos y del mismo color
-                                          if (p1 != p2 &&
-                                              p1.color == p2.color) {
-                                            // Se encontró un par válido
-                                            scoreManager.addPoints(
-                                                level: widget.level);
+                                            // Si los puntos son distintos y del mismo color
+                                            if (p1 != p2 &&
+                                                p1.color == p2.color) {
+                                              // Se encontró un par válido
+                                              scoreManager.addPoints(
+                                                  level: widget.level);
 
-                                            // Pequeña espera antes de ocultar los puntos encontrados
-                                            Future.delayed(
-                                                const Duration(
-                                                    milliseconds: 100), () {
-                                              setState(() {
-                                                for (var point
-                                                    in selectedPoints) {
-                                                  point.isVisible = false;
-                                                }
+                                              // Pequeña espera antes de ocultar los puntos encontrados
+                                              Future.delayed(
+                                                  const Duration(
+                                                      milliseconds: 100), () {
+                                                setState(() {
+                                                  for (var point
+                                                      in selectedPoints) {
+                                                    point.isVisible = false;
+                                                  }
+                                                });
+
+                                                // Pequeña espera adicional para limpiar selección
+                                                Future.delayed(
+                                                    const Duration(
+                                                        milliseconds: 150), () {
+                                                  setState(() {
+                                                    selectedPoints.clear();
+
+                                                    // Verifica si aún quedan puntos visibles
+                                                    final anyVisible = grid.any(
+                                                        (row) => row.any(
+                                                            (point) => point
+                                                                .isVisible));
+
+                                                    if (!anyVisible) {
+                                                      // Si no quedan puntos, se genera nuevo tablero y se agrega tiempo
+                                                      _generateGrid();
+                                                      timerKey.currentState
+                                                          ?.addTimeByLevel(
+                                                              widget.level);
+                                                    }
+                                                  });
+                                                });
                                               });
+                                            } else {
+                                              // No son del mismo color o es el mismo punto
+                                              scoreManager
+                                                  .subtractPoints(widget.level);
 
-                                              // Pequeña espera adicional para limpiar selección
+                                              // Pequeña espera antes de deseleccionar y penalizar
                                               Future.delayed(
                                                   const Duration(
                                                       milliseconds: 150), () {
                                                 setState(() {
-                                                  selectedPoints.clear();
-
-                                                  // Verifica si aún quedan puntos visibles
-                                                  final anyVisible = grid.any(
-                                                      (row) => row.any(
-                                                          (point) =>
-                                                              point.isVisible));
-
-                                                  if (!anyVisible) {
-                                                    // Si no quedan puntos, se genera nuevo tablero y se agrega tiempo
-                                                    _generateGrid();
-                                                    timerKey.currentState
-                                                        ?.addTimeByLevel(
-                                                            widget.level);
+                                                  for (var point
+                                                      in selectedPoints) {
+                                                    point.isSelected = false;
                                                   }
+                                                  selectedPoints.clear();
+                                                  // Penalización de tiempo por error
+                                                  timerKey.currentState
+                                                      ?.subtractTime(2);
                                                 });
                                               });
-                                            });
-                                          } else {
-                                            // No son del mismo color o es el mismo punto
-                                            scoreManager
-                                                .subtractPoints(widget.level);
-
-                                            // Pequeña espera antes de deseleccionar y penalizar
-                                            Future.delayed(
-                                                const Duration(
-                                                    milliseconds: 150), () {
-                                              setState(() {
-                                                for (var point
-                                                    in selectedPoints) {
-                                                  point.isSelected = false;
-                                                }
-                                                selectedPoints.clear();
-                                                // Penalización de tiempo por error
-                                                timerKey.currentState
-                                                    ?.subtractTime(2);
-                                              });
-                                            });
+                                            }
                                           }
                                         }
-                                      }
-                                    },
+                                      },
 
-                                    // Widget que representa visualmente cada punto
-                                    child: PointTile(
-                                      color: grid[row][col].color,
-                                      isSelected: grid[row][col].isSelected,
-                                      isVisible: grid[row][col].isVisible,
-                                      gameStarted: gameStarted,
+                                      // Widget que representa visualmente cada punto
+                                      child: PointTile(
+                                        color: grid[row][col].color,
+                                        isSelected: grid[row][col].isSelected,
+                                        isVisible: grid[row][col].isVisible,
+                                        gameStarted: gameStarted,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }),
-                            );
-                          }),
+                                  );
+                                }),
+                              );
+                            }),
+                          ),
                         ),
-                      ),
-              ),
-            ],
-          );
-        },
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

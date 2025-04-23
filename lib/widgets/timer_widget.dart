@@ -20,6 +20,8 @@ class TimerWidget extends StatefulWidget {
 
 class TimerWidgetState extends State<TimerWidget> {
   late int currentTime;
+  bool isFinished = false;
+  bool isPaused = false;
   Timer? timer;
 
   @override
@@ -30,16 +32,47 @@ class TimerWidgetState extends State<TimerWidget> {
 
   //funcion que inicia el timer
   void startTimer() {
+    isPaused = false; // Resetear estado de pausa
     timer?.cancel(); // Cancela el timer anterior si existe
-    currentTime = widget.initialTime; // Reinicia el tiempo
+    isFinished = false; // Resetear estado de finalizado
+
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (currentTime > 0) {
-        setState(() => currentTime--);
-      } else {
-        timer.cancel();
-        widget.onTimeUp();
+      if (!isPaused) {
+        // Solo decrementar si no está pausado
+        if (currentTime > 0) {
+          setState(() => currentTime--);
+        } else {
+          timer.cancel();
+          isFinished = true;
+          widget.onTimeUp();
+        }
       }
     });
+  }
+
+  void pauseTimer() {
+    setState(() {
+      isPaused = true; // Marcar como pausado
+    });
+    timer?.cancel();
+  }
+
+  void resumeTimer() {
+    if (currentTime > 0 && !isFinished) {
+      setState(() {
+        isPaused = false; // Marcar como no pausado
+      });
+      // Reiniciar el timer sin resetear el tiempo
+      timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (currentTime > 0) {
+          setState(() => currentTime--);
+        } else {
+          timer.cancel();
+          isFinished = true;
+          widget.onTimeUp();
+        }
+      });
+    }
   }
 
   //funcion que suma segundos al tiempo actual
@@ -69,9 +102,10 @@ class TimerWidgetState extends State<TimerWidget> {
     setState(() => currentTime += extraTime);
   }
 
-  //funcion que resta 2 segundos al tiempo actual
+  //funcion que resta segundos al tiempo actual
   void subtractTime(int seconds) {
     setState(() {
+      isFinished = true;
       currentTime = max(0, currentTime - seconds);
     });
   }
