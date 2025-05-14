@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PointTile extends StatelessWidget {
-  final Color color;
+  final Color? color;
   final bool isSelected;
   final bool isVisible;
   final bool gameStarted;

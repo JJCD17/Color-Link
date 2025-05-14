@@ -13,6 +13,16 @@ class GameStatsStorage {
     return prefs.getInt('last_level_played');
   }
 
+  Future<void> saveTimeForLevel(int level, int time) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('time_level_$level', time);
+  }
+
+  Future<int?> getTimeForLevel(int level) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('time_level_$level');
+  }
+
   /// Guarda la puntuación actual del nivel y actualiza el récord si es mayor
   Future<void> saveScoreForLevel(int level, int score) async {
     final prefs = await SharedPreferences.getInstance();

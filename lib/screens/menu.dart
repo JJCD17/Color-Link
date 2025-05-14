@@ -13,49 +13,54 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   final List<Map<String, dynamic>> levels = const [
     {
-      'name': 'Fácil',
-      'rows': 4,
-      'cols': 3,
-      'time': 20,
       'level': 1,
-      'color': Colors.green,
-      'icon': Icons.accessible_forward,
+      'rows': 3,
+      'cols': 3,
     },
     {
-      'name': 'Medio',
-      'rows': 5,
-      'cols': 4,
-      'time': 30,
       'level': 2,
-      'color': Colors.blue,
-      'icon': Icons.directions_run,
+      'rows': 3,
+      'cols': 3,
     },
     {
-      'name': 'Difícil',
-      'rows': 6,
-      'cols': 4,
-      'time': 35,
       'level': 3,
-      'color': Colors.orange,
-      'icon': Icons.fitness_center,
+      'rows': 3,
+      'cols': 3,
     },
     {
-      'name': 'Extremo',
-      'rows': 6,
-      'cols': 5,
-      'time': 40,
       'level': 4,
-      'color': Colors.red,
-      'icon': Icons.whatshot,
+      'rows': 3,
+      'cols': 3,
     },
     {
-      'name': 'Legendario',
-      'rows': 8,
-      'cols': 5,
-      'time': 45,
       'level': 5,
-      'color': Colors.purple,
-      'icon': FontAwesomeIcons.skull,
+      'rows': 3,
+      'cols': 3,
+    },
+    {
+      'level': 6,
+      'rows': 4,
+      'cols': 4,
+    },
+    {
+      'level': 7,
+      'rows': 4,
+      'cols': 4,
+    },
+    {
+      'level': 8,
+      'rows': 4,
+      'cols': 4,
+    },
+    {
+      'level': 9,
+      'rows': 4,
+      'cols': 5,
+    },
+    {
+      'level': 10,
+      'rows': 4,
+      'cols': 5,
     },
   ];
 
@@ -92,109 +97,85 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            Expanded(
-              child: ListView.separated(
-                itemCount: levels.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 15),
-                itemBuilder: (context, index) {
-                  final level = levels[index];
-                  final levelNumber = level['level'];
-                  final record = records[levelNumber] ?? 0;
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.1,
+          ),
+          itemCount: levels.length,
+          itemBuilder: (context, index) {
+            final level = levels[index];
+            final levelNumber = level['level'];
 
-                  return _LevelCard(
-                    level: level,
-                    record: record,
-                    onPressed: () => navigateToGame(context, level),
-                  );
-                },
-              ),
-            ),
-          ],
+            // Suponiendo que usas el record como número de estrellas (0 a 3)
+            final stars = (records[levelNumber] ?? 0).clamp(0, 3);
+
+            return _LevelGridTile(
+              level: level,
+              stars: stars,
+              onPressed: () => navigateToGame(context, level),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _LevelCard extends StatelessWidget {
+class _LevelGridTile extends StatelessWidget {
   final Map<String, dynamic> level;
-  final int record;
+  final int stars;
   final VoidCallback onPressed;
 
-  const _LevelCard({
+  const _LevelGridTile({
     required this.level,
-    required this.record,
+    required this.stars,
     required this.onPressed,
   });
 
+  List<Widget> _buildStars(int count) {
+    return List.generate(3, (index) {
+      return Icon(
+        index < count ? Icons.star : Icons.star_border,
+        color: index < count ? Colors.amber : Colors.grey,
+        size: 20,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onPressed,
+    return GestureDetector(
+      onTap: onPressed,
+      child: Card(
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: level['color'].withOpacity(0.2),
-                  shape: BoxShape.circle,
+              Text(
+                'Nivel ${level['level']}',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: level['color'],
                 ),
-                child: Icon(level['icon'], color: level['color'], size: 30),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                // Nivel
-                                level['name'],
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: level['color'],
-                                ),
-                              ),
-                              Text(
-                                // Record
-                                '🏆 $record pts',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.amber,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            //Detalles del nivel
-                            'Tablero: ${level['rows']}x${level['cols']} | '
-                            'Tiempo: ${level['time']} seg',
-                            style: TextStyle(
-                                fontSize: 16, color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              if (level['level'] == 1)
+                const Text(
+                  'Tutorial',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
                 ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: _buildStars(stars),
               ),
             ],
           ),
@@ -209,14 +190,10 @@ void navigateToGame(BuildContext context, Map<String, dynamic> level) {
     context,
     MaterialPageRoute(
       builder: (_) => GameBoard(
+        level: level['level'],
         gridSizeRow: level['rows'],
         gridSizeCol: level['cols'],
-        initialTime: level['time'],
-        level: level['level'],
-        levelName: level['name'],
-        icon: level['icon'],
-        color: level['color'],
-        time: level['time'],
+        time: 0,
       ),
     ),
   );

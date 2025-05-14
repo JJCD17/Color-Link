@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class PointData {
   final int row;
   final int col;
-  final Color color;
+  Color? color;
   bool isSelected;
   bool isVisible;
 

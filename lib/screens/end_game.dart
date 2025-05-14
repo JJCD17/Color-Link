@@ -4,24 +4,17 @@ import '../screens/menu.dart';
 
 class EndGameScreen extends StatefulWidget {
   final int level;
-  final String levelName;
-  final int score;
-  final IconData icon;
-  final Color color;
-  final int time;
   final int rows;
   final int cols;
+
+  final int time;
 
   const EndGameScreen({
     super.key,
     required this.level,
-    required this.levelName,
-    required this.score,
-    required this.icon,
-    required this.color,
-    required this.time,
     required this.rows,
     required this.cols,
+    required this.time,
   });
 
   @override
@@ -41,6 +34,13 @@ class _EndGameScreenState extends State<EndGameScreen> {
     int storedHighScore =
         await GameStatsStorage().getRecordForLevel(widget.level);
     setState(() => highScore = storedHighScore);
+  }
+
+  // Nueva función auxiliar
+  String formatTime(int seconds) {
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    final remainingSeconds = (seconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$remainingSeconds';
   }
 
   @override
@@ -64,11 +64,12 @@ class _EndGameScreenState extends State<EndGameScreen> {
                 const SizedBox(height: 100),
                 _buildTitle(),
                 const SizedBox(height: 30),
-                _buildStatCard("Puntuación", widget.score, Icons.bubble_chart,
-                    Colors.greenAccent),
+                _buildStatCard("Calificacion", highScore,
+                    Icons.workspace_premium, Colors.amber),
                 const SizedBox(height: 16),
-                _buildStatCard(
-                    "Récord", highScore, Icons.workspace_premium, Colors.amber),
+                _buildStatCard("Tiempo", formatTime(widget.time), Icons.timer,
+                    Colors.blueAccent),
+                const SizedBox(height: 16),
               ],
             ),
             Column(
@@ -76,9 +77,6 @@ class _EndGameScreenState extends State<EndGameScreen> {
                 _buildActionButton("Intentar de nuevo", () {
                   final levelData = {
                     'level': widget.level,
-                    'name': widget.levelName,
-                    'icon': widget.icon,
-                    'color': widget.color,
                     'time': widget.time,
                     'rows': widget.rows,
                     'cols': widget.cols,
@@ -105,17 +103,11 @@ class _EndGameScreenState extends State<EndGameScreen> {
   Widget _buildTitle() {
     return Column(
       children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: widget.color.withValues(alpha: 0.2),
-          child: Icon(widget.icon, color: widget.color, size: 30),
-        ),
-        const SizedBox(height: 16),
         Text(
-          "Nivel ${widget.levelName}",
+          "Nivel ${widget.level}",
           style: const TextStyle(
-            fontSize: 34,
-            color: Colors.white,
+            fontSize: 40,
+            color: Colors.teal,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
           ),
@@ -125,7 +117,8 @@ class _EndGameScreenState extends State<EndGameScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, int value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, dynamic value, IconData icon, Color color) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),

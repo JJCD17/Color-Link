@@ -1,34 +1,26 @@
 import 'dart:async';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
+import 'package:toastification/toastification.dart';
 
 import 'package:flutter/material.dart';
 import 'timer_widget.dart';
 import '../models/point_data.dart';
 import 'point_tile.dart';
-import '../models/score_manager.dart';
 import 'dart:math';
-import '../models/game_stats_storage.dart';
 import '../screens/end_game.dart';
 
 class GameBoard extends StatefulWidget {
+  final int level;
   final int gridSizeRow;
   final int gridSizeCol;
-  final int initialTime;
-  final int level;
-  final String levelName;
-  final IconData icon;
-  final Color color;
+
   final int time;
 
   const GameBoard({
     super.key,
+    required this.level,
     required this.gridSizeRow,
     required this.gridSizeCol,
-    required this.initialTime,
-    required this.level,
-    required this.levelName,
-    required this.icon,
-    required this.color,
     required this.time,
   });
 
@@ -37,11 +29,14 @@ class GameBoard extends StatefulWidget {
 }
 
 class GameBoardState extends State<GameBoard> {
-  bool gameStarted = false;
-  bool isCountdownActive = true;
-  final GlobalKey<TimerWidgetState> timerKey = GlobalKey<TimerWidgetState>();
-  late ScoreManager scoreManager;
+  bool gameStarted = false; // Controla si el juego ha comenzado
+  bool isCountdownActive = true; // Controla si el countdown esta activo
+  final GlobalKey<TimerWidgetState> timerKey =
+      GlobalKey<TimerWidgetState>(); // Clave global para acceder al TimerWidget
+
   late List<List<PointData>> grid;
+  late List<List<PointData>> referenceGrid;
+
   List<PointData> selectedPoints = [];
   final List<Color> availableColors = [
     Colors.red,
@@ -49,12 +44,15 @@ class GameBoardState extends State<GameBoard> {
     Colors.green,
     Colors.orange,
     Colors.purple,
+    Colors.white,
+    Colors.grey,
+    Colors.yellow,
+    Colors.tealAccent,
   ];
 
   @override
   void initState() {
     super.initState();
-    scoreManager = ScoreManager();
     _generateGrid();
 
     // Inicia automáticamente después de 3 segundos
@@ -66,69 +64,184 @@ class GameBoardState extends State<GameBoard> {
     });
   }
 
+  PointData _findEmptyCell() {
+    for (int row = 0; row < widget.gridSizeRow; row++) {
+      for (int col = 0; col < widget.gridSizeCol; col++) {
+        if (grid[row][col].color == null) {
+          return grid[row][col];
+        }
+      }
+    }
+    throw Exception('No empty cell found!');
+  }
+
+  bool _isAdjacent(int row, int col, PointData emptyCell) {
+    return (row == emptyCell.row &&
+            (col == emptyCell.col - 1 || col == emptyCell.col + 1)) ||
+        (col == emptyCell.col &&
+            (row == emptyCell.row - 1 || row == emptyCell.row + 1));
+  }
+
   void _generateGrid() {
     final totalTiles = widget.gridSizeRow * widget.gridSizeCol;
-
-    // Asegúrate que el número total de cuadros es par
-    (totalTiles % 2 == 0, 'El número total de cuadros debe ser par');
-
     final random = Random();
-    final List<Color> pairedColors = [];
 
-    // Creamos pares hasta llenar el tablero
-    while (pairedColors.length < totalTiles) {
+    // 1. Genera colores aleatorios (sin repetir)
+    List<Color?> colors = [];
+    while (colors.length < totalTiles - 1) {
       final color = availableColors[random.nextInt(availableColors.length)];
-      pairedColors.add(color);
-      pairedColors.add(color); // lo agregamos dos veces para crear los pares
+      if (!colors.contains(color)) colors.add(color);
     }
+    colors.add(null); // Añade exactamente UN `null`
 
-    // Mezclamos los colores
-    pairedColors.shuffle();
-
-    // Generamos el grid con los colores mezclados
-    grid = List.generate(widget.gridSizeRow, (row) {
+    // 2. Crea el referenceGrid (ordenado inicialmente)
+    referenceGrid = List.generate(widget.gridSizeRow, (row) {
       return List.generate(widget.gridSizeCol, (col) {
         final index = row * widget.gridSizeCol + col;
         return PointData(
           row: row,
           col: col,
-          color: pairedColors[index],
+          color: colors[index],
           isSelected: false,
           isVisible: true,
         );
       });
     });
-  }
 
-  void _handleTimeUp() {
-    // Actualiza la variable que indica el estado del juego
-    setState(() {
-      gameStarted = false;
+    // 3. Mezcla el referenceGrid garantizando un solo `null`
+    _shuffleGrid(referenceGrid, 10);
+
+    // 4. Copia el referenceGrid al grid principal (clonación profunda)
+    grid = List.generate(widget.gridSizeRow, (row) {
+      return List.generate(widget.gridSizeCol, (col) {
+        return PointData(
+          row: row,
+          col: col,
+          color: referenceGrid[row][col].color,
+          isSelected: false,
+          isVisible: true,
+        );
+      });
     });
 
-    // Guardar la puntuación y el récord si aplica
-    GameStatsStorage().saveScoreForLevel(widget.level, scoreManager.score);
+    // 5. Verifica que solo haya un `null` (debug)
+    _debugNullCount();
+  }
 
-    GameStatsStorage().saveLastLevelPlayed(widget.level);
+  void _shuffleGrid(List<List<PointData>> grid, int moves) {
+    // Encuentra la posición inicial del `null` (última celda)
+    int nullRow = widget.gridSizeRow - 1;
+    int nullCol = widget.gridSizeCol - 1;
 
-    // Navegar a la pantalla de fin de juego
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EndGameScreen(
-            level: widget.level,
-            levelName: widget.levelName,
-            score: scoreManager.score,
-            icon: widget.icon,
-            color: widget.color,
-            time: widget.time,
-            rows: widget.gridSizeRow,
-            cols: widget.gridSizeCol,
-          ),
-        ),
-      );
+    final random = Random();
+    for (int i = 0; i < moves; i++) {
+      final directions = [
+        Point(-1, 0), // Arriba
+        Point(1, 0), // Abajo
+        Point(0, -1), // Izquierda
+        Point(0, 1), // Derecha
+      ];
+
+      // Filtra movimientos válidos
+      final validDirections = directions.where((dir) {
+        final newRow = nullRow + dir.x;
+        final newCol = nullCol + dir.y;
+        return newRow >= 0 &&
+            newRow < widget.gridSizeRow &&
+            newCol >= 0 &&
+            newCol < widget.gridSizeCol;
+      }).toList();
+
+      if (validDirections.isEmpty) break;
+
+      // Elige un movimiento aleatorio
+      final dir = validDirections[random.nextInt(validDirections.length)];
+      final newRow = nullRow + dir.x;
+      final newCol = nullCol + dir.y;
+
+      // Intercambio seguro: solo mueve el `null`, no crea uno nuevo
+      grid[nullRow][nullCol].color = grid[newRow][newCol].color;
+      grid[newRow][newCol].color = null;
+      nullRow = newRow;
+      nullCol = newCol;
     }
+  }
+
+// Función de debug para verificar `null`s
+  void _debugNullCount() {
+    int count = 0;
+    for (var row in grid) {
+      for (var tile in row) {
+        if (tile.color == null) count++;
+      }
+    }
+    print('Nulls en grid: $count'); // Debe imprimir "1"
+  }
+
+  void _handleWin() {
+    timerKey.currentState?.pauseTimer();
+
+    // Muestra el toast y luego navega
+    toastification.show(
+      context: context,
+      type: ToastificationType.success,
+      style: ToastificationStyle.flat,
+      autoCloseDuration: const Duration(seconds: 3),
+      title: Text(
+        '¡Felicidades!',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      description: Text(
+        'Nivel completado con éxito',
+        style: TextStyle(color: Colors.white70),
+      ),
+      alignment: Alignment.bottomCenter,
+      icon: const Icon(Icons.celebration, color: Colors.white),
+      primaryColor: Colors.green[700],
+      backgroundColor: Colors.green[800],
+      borderRadius: BorderRadius.circular(12),
+      showProgressBar: true,
+      callbacks: ToastificationCallbacks(
+        onCloseButtonTap: (_) => _navigateToEndGame(),
+      ),
+    );
+
+    // Programa la navegación para después que se cierre el toast
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _navigateToEndGame();
+      }
+    });
+  }
+
+  void _navigateToEndGame() {
+    int elapsedTime = timerKey.currentState?.currentTime ?? 0;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EndGameScreen(
+          level: widget.level,
+          rows: widget.gridSizeRow,
+          cols: widget.gridSizeCol,
+          time: elapsedTime,
+        ),
+      ),
+    );
+  }
+
+  bool areGridsEqual() {
+    for (int row = 0; row < widget.gridSizeRow; row++) {
+      for (int col = 0; col < widget.gridSizeCol; col++) {
+        if (grid[row][col].color != referenceGrid[row][col].color) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   void _showExitConfirmation(BuildContext context) {
@@ -206,13 +319,12 @@ class GameBoardState extends State<GameBoard> {
                   onPressed: () => _showExitConfirmation(context),
                 ),
           title: Text(
-            widget.levelName,
+            'Nivel ${widget.level}',
           ),
           centerTitle: true,
           titleTextStyle: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: widget.color,
           ),
         ),
         backgroundColor: const Color.fromARGB(255, 36, 36, 36),
@@ -231,7 +343,7 @@ class GameBoardState extends State<GameBoard> {
 
             return Column(
               children: [
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 35, vertical: 15),
@@ -239,17 +351,18 @@ class GameBoardState extends State<GameBoard> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 150,
+                        width: 165,
+                        height: 100,
                         child: TimerWidget(
                           key: timerKey,
-                          initialTime: widget.initialTime,
-                          onTimeUp: _handleTimeUp,
+                          onTimeUp: _navigateToEndGame,
                         ),
                       ),
                       const SizedBox(width: 20),
                       Container(
-                        //Score
-                        width: 150, // Ancho fijo
+                        //Movimientos disponibles
+                        width: 165, // Ancho fijo
+                        height: 100,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 15),
                         decoration: BoxDecoration(
@@ -263,34 +376,37 @@ class GameBoardState extends State<GameBoard> {
                             ),
                           ],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.star,
-                                color: Colors.white, size: 24),
-                            const SizedBox(width: 10),
-                            SizedBox(
-                              width: 60,
-                              child: Text(
-                                '${scoreManager.score}'
-                                    .toString()
-                                    .padLeft(3, '0'),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      )
                     ],
                   ),
                 ),
-
-                //Tablero
+                //Tablero de refenrencia
+                SizedBox(
+                  width: widget.gridSizeCol * 40,
+                  height: widget.gridSizeRow * 40,
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: widget.gridSizeCol,
+                    ),
+                    itemCount: widget.gridSizeRow * widget.gridSizeCol,
+                    itemBuilder: (context, index) {
+                      final row = index ~/ widget.gridSizeCol;
+                      final col = index % widget.gridSizeCol;
+                      return Container(
+                        margin: EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: referenceGrid[row][col].color,
+                          border: Border.all(color: Colors.grey[800]!),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(height: 20),
+                //Game board
                 Expanded(
                   child: !gameStarted
                       ? LayoutBuilder(
@@ -324,7 +440,8 @@ class GameBoardState extends State<GameBoard> {
                                   height: 150,
                                   ringColor: Colors.grey[800]!,
                                   fillColor: Colors.blueAccent,
-                                  backgroundColor: Colors.black38,
+                                  backgroundColor:
+                                      const Color.fromARGB(54, 0, 0, 0),
                                   strokeWidth: 8,
                                   textStyle: TextStyle(
                                     fontSize: 50,
@@ -345,7 +462,7 @@ class GameBoardState extends State<GameBoard> {
                             );
                           },
                         )
-                      : // Tablero
+                      : // Tablero jugable
                       Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -361,96 +478,29 @@ class GameBoardState extends State<GameBoard> {
                                       onTap: () {
                                         final tappedPoint = grid[row][col];
 
-                                        // Si el punto ya estaba seleccionado, se deselecciona
-                                        if (tappedPoint.isSelected) {
+                                        // Si la celda seleccionada es la vacía, no hacemos nada
+                                        if (tappedPoint.color == null) return;
+
+                                        // Verificar si la celda seleccionada es adyacente a la vacía
+                                        final emptyCell = _findEmptyCell();
+                                        if (_isAdjacent(row, col, emptyCell)) {
                                           setState(() {
-                                            tappedPoint.isSelected = false;
-                                            selectedPoints.remove(tappedPoint);
+                                            // Mover la pieza hacia la vacía
+                                            grid[emptyCell.row][emptyCell.col]
+                                                .color = tappedPoint.color;
+                                            grid[row][col].color = null;
                                           });
-                                          return;
                                         }
-
-                                        // Solo se pueden seleccionar un máximo de 2 puntos a la vez
-                                        if (selectedPoints.length < 2) {
-                                          setState(() {
-                                            tappedPoint.isSelected = true;
-                                            selectedPoints.add(tappedPoint);
-                                          });
-
-                                          // Cuando hay 2 puntos seleccionados, se evalúan
-                                          if (selectedPoints.length == 2) {
-                                            final p1 = selectedPoints[0];
-                                            final p2 = selectedPoints[1];
-
-                                            // Si los puntos son distintos y del mismo color
-                                            if (p1 != p2 &&
-                                                p1.color == p2.color) {
-                                              // Se encontró un par válido
-                                              scoreManager.addPoints(
-                                                  level: widget.level);
-
-                                              // Pequeña espera antes de ocultar los puntos encontrados
-                                              Future.delayed(
-                                                  const Duration(
-                                                      milliseconds: 100), () {
-                                                setState(() {
-                                                  for (var point
-                                                      in selectedPoints) {
-                                                    point.isVisible = false;
-                                                  }
-                                                });
-
-                                                // Pequeña espera adicional para limpiar selección
-                                                Future.delayed(
-                                                    const Duration(
-                                                        milliseconds: 150), () {
-                                                  setState(() {
-                                                    selectedPoints.clear();
-
-                                                    // Verifica si aún quedan puntos visibles
-                                                    final anyVisible = grid.any(
-                                                        (row) => row.any(
-                                                            (point) => point
-                                                                .isVisible));
-
-                                                    if (!anyVisible) {
-                                                      // Si no quedan puntos, se genera nuevo tablero y se agrega tiempo
-                                                      _generateGrid();
-                                                      timerKey.currentState
-                                                          ?.addTimeByLevel(
-                                                              widget.level);
-                                                    }
-                                                  });
-                                                });
-                                              });
-                                            } else {
-                                              // No son del mismo color o es el mismo punto
-                                              scoreManager
-                                                  .subtractPoints(widget.level);
-
-                                              // Pequeña espera antes de deseleccionar y penalizar
-                                              Future.delayed(
-                                                  const Duration(
-                                                      milliseconds: 150), () {
-                                                setState(() {
-                                                  for (var point
-                                                      in selectedPoints) {
-                                                    point.isSelected = false;
-                                                  }
-                                                  selectedPoints.clear();
-                                                  // Penalización de tiempo por error
-                                                  timerKey.currentState
-                                                      ?.subtractTime(2);
-                                                });
-                                              });
-                                            }
-                                          }
+                                        // Verifica si ganó
+                                        if (areGridsEqual()) {
+                                          _handleWin();
                                         }
                                       },
-
                                       // Widget que representa visualmente cada punto
                                       child: PointTile(
-                                        color: grid[row][col].color,
+                                        color: grid[row][col].color ??
+                                            Colors
+                                                .transparent, // Si es vacío, mostramos transparente
                                         isSelected: grid[row][col].isSelected,
                                         isVisible: grid[row][col].isVisible,
                                         gameStarted: gameStarted,
