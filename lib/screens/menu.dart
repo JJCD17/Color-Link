@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../widgets/game_board.dart';
 import '../models/game_stats_storage.dart';
 
