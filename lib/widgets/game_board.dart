@@ -37,6 +37,8 @@ class GameBoardState extends State<GameBoard> {
   late List<List<PointData>> grid;
   late List<List<PointData>> referenceGrid;
 
+  late int maxAllowedMoves;
+
   List<PointData> selectedPoints = [];
   final List<Color> availableColors = [
     Colors.red,
@@ -53,15 +55,47 @@ class GameBoardState extends State<GameBoard> {
   @override
   void initState() {
     super.initState();
-    _generateGrid();
 
-    // Inicia automáticamente después de 3 segundos
+    maxAllowedMoves = _getShuffleMovesForLevel(widget.level);
+
+    // Paso 1: Genera la referencia final del puzzle
+    referenceGrid = _generateReferenceGridForLevel(
+      widget.level,
+      widget.gridSizeRow,
+      widget.gridSizeCol,
+    );
+
+    // Paso 2: Crea una copia profunda para mezclarla
+    grid = List.generate(widget.gridSizeRow, (row) {
+      return List.generate(widget.gridSizeCol, (col) {
+        return PointData(
+          row: row,
+          col: col,
+          color: referenceGrid[row][col].color,
+          isSelected: false,
+          isVisible: true,
+        );
+      });
+    });
+
+    // Paso 3: Mezcla el grid que usará el jugador (NO el de referencia)
+    final shuffleMoves = _getShuffleMovesForLevel(widget.level);
+    _shuffleGrid(grid, shuffleMoves);
+
+    // Inicia automáticamente después de 5 segundos
     Future.delayed(Duration(seconds: 5), () {
       if (mounted) {
         setState(() => gameStarted = true);
         timerKey.currentState?.startTimer();
       }
     });
+
+    _debugNullCount();
+  }
+
+  int _getShuffleMovesForLevel(int level) {
+    // Por ejemplo, empezamos en 5 y subimos 10 por nivel
+    return 5 + (level - 1) * 10;
   }
 
   PointData _findEmptyCell() {
@@ -82,22 +116,34 @@ class GameBoardState extends State<GameBoard> {
             (row == emptyCell.row - 1 || row == emptyCell.row + 1));
   }
 
-  void _generateGrid() {
-    final totalTiles = widget.gridSizeRow * widget.gridSizeCol;
-    final random = Random();
+  List<List<PointData>> _generateReferenceGridForLevel(
+      int level, int rows, int cols) {
+    // Puedes usar un switch o ifs para definir niveles
+    switch (level) {
+      case 1:
+        return _generateSimpleGrid(rows, cols);
+      case 2:
+        return _generateSimpleGrid(rows, cols);
+      default:
+        return _generateSimpleGrid(rows, cols);
+    }
+  }
 
-    // 1. Genera colores aleatorios (sin repetir)
-    List<Color?> colors = [];
+  List<List<PointData>> _generateSimpleGrid(int rows, int cols) {
+    final random = Random();
+    final totalTiles = rows * cols;
+    final List<Color?> colors = [];
+
     while (colors.length < totalTiles - 1) {
       final color = availableColors[random.nextInt(availableColors.length)];
       if (!colors.contains(color)) colors.add(color);
     }
-    colors.add(null); // Añade exactamente UN `null`
 
-    // 2. Crea el referenceGrid (ordenado inicialmente)
-    referenceGrid = List.generate(widget.gridSizeRow, (row) {
-      return List.generate(widget.gridSizeCol, (col) {
-        final index = row * widget.gridSizeCol + col;
+    colors.add(null); // celda vacía
+
+    return List.generate(rows, (row) {
+      return List.generate(cols, (col) {
+        final index = row * cols + col;
         return PointData(
           row: row,
           col: col,
@@ -107,25 +153,6 @@ class GameBoardState extends State<GameBoard> {
         );
       });
     });
-
-    // 3. Mezcla el referenceGrid garantizando un solo `null`
-    _shuffleGrid(referenceGrid, 10);
-
-    // 4. Copia el referenceGrid al grid principal (clonación profunda)
-    grid = List.generate(widget.gridSizeRow, (row) {
-      return List.generate(widget.gridSizeCol, (col) {
-        return PointData(
-          row: row,
-          col: col,
-          color: referenceGrid[row][col].color,
-          isSelected: false,
-          isVisible: true,
-        );
-      });
-    });
-
-    // 5. Verifica que solo haya un `null` (debug)
-    _debugNullCount();
   }
 
   void _shuffleGrid(List<List<PointData>> grid, int moves) {
@@ -360,8 +387,7 @@ class GameBoardState extends State<GameBoard> {
                       ),
                       const SizedBox(width: 20),
                       Container(
-                        //Movimientos disponibles
-                        width: 165, // Ancho fijo
+                        width: 165,
                         height: 100,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 15),
@@ -370,9 +396,33 @@ class GameBoardState extends State<GameBoard> {
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.yellow.withValues(),
+                              color: Colors.yellow
+                                  .withOpacity(0.5), // Ajuste correcto
                               blurRadius: 8,
                               offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Movimientos',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Max: $maxAllowedMoves', // Asegúrate de tener esta variable
+                              style: TextStyle(
+                                color: Colors.yellow,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
