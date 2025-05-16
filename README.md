@@ -2,14 +2,6 @@
 
 A new Flutter project.
 
-Versión 1.5.1
-- Se reemplazó el sistema de récord por uno basado en estrellas
-- Se guarda el mejor desempeño por nivel
-- Se muestra el récord y movimientos al finalizar el nivel
-- Se implementa límite de movimientos por dificultad
-- Se ajusta el diseño de la pantalla EndGame
-- Corregido crash al reiniciar nivel por parámetros incompletos
-
 ## Getting Started
 
 This project is a starting point for a Flutter application.
