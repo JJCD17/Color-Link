@@ -6,8 +6,9 @@ class EndGameScreen extends StatefulWidget {
   final int level;
   final int rows;
   final int cols;
-
   final int time;
+  final int minMoves;
+  final int movimientos;
 
   const EndGameScreen({
     super.key,
@@ -15,6 +16,8 @@ class EndGameScreen extends StatefulWidget {
     required this.rows,
     required this.cols,
     required this.time,
+    required this.minMoves,
+    required this.movimientos,
   });
 
   @override
@@ -23,17 +26,48 @@ class EndGameScreen extends StatefulWidget {
 
 class _EndGameScreenState extends State<EndGameScreen> {
   int highScore = 0;
+  late int estrellas;
 
   @override
   void initState() {
     super.initState();
+    estrellas = calcularEstrellas(widget.movimientos, widget.minMoves);
+    print('Nivel: ${widget.level}');
+    print('minMoves recibido: ${widget.minMoves}');
+    print('movimientos hechos: ${widget.movimientos}');
     _loadHighScore();
+    _guardarEstrellas();
   }
 
   Future<void> _loadHighScore() async {
     int storedHighScore =
         await GameStatsStorage().getRecordForLevel(widget.level);
     setState(() => highScore = storedHighScore);
+  }
+
+  int calcularEstrellas(int movimientos, int minMoves) {
+    //condicionado a
+    //0 a 5 movimientos = 3 estrellas
+    //6 a 8 movimientos = 2 estrellas
+    //9 o mas movimientos = 1 estrella
+    final diferencia = movimientos - minMoves;
+
+    if (diferencia <= 0) return 3;
+    if (diferencia <= 2) return 2;
+    if (diferencia <= 4) return 1;
+    return 0;
+  }
+
+  Future<void> _guardarEstrellas() async {
+    final storage = GameStatsStorage();
+    final estrellasPrevias = await storage.getStarsForLevel(widget.level);
+    if (estrellas > estrellasPrevias) {
+      await storage.saveStarsForLevel(widget.level, estrellas);
+      print('⭐ Estrellas actualizadas: $estrellas');
+    } else {
+      print(
+          '↪️ Estrellas previas ($estrellasPrevias) son mejores o iguales. No se actualiza.');
+    }
   }
 
   // Nueva función auxiliar
@@ -63,12 +97,14 @@ class _EndGameScreenState extends State<EndGameScreen> {
               children: [
                 const SizedBox(height: 100),
                 _buildTitle(),
-                const SizedBox(height: 30),
-                _buildStatCard("Calificacion", highScore,
-                    Icons.workspace_premium, Colors.amber),
+                const SizedBox(height: 16),
+                _starsCard(),
                 const SizedBox(height: 16),
                 _buildStatCard("Tiempo", formatTime(widget.time), Icons.timer,
                     Colors.blueAccent),
+                const SizedBox(height: 16),
+                _buildStatCard("Movimientos realizados", widget.movimientos,
+                    Icons.touch_app, Colors.blueAccent),
                 const SizedBox(height: 16),
               ],
             ),
@@ -117,13 +153,26 @@ class _EndGameScreenState extends State<EndGameScreen> {
     );
   }
 
+  Widget _starsCard() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) {
+        return Icon(
+          index < estrellas ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+          size: 40,
+        );
+      }),
+    );
+  }
+
   Widget _buildStatCard(
       String label, dynamic value, IconData icon, Color color) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: Colors.grey[850],
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
       ),
