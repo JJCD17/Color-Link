@@ -55,4 +55,20 @@ class GameStatsStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
+
+  /// Guarda la cantidad de estrellas ganadas en un nivel
+  Future<void> saveStarsForLevel(int level, int stars) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Opcional: guardar solo si es mejor que el anterior
+    final currentStars = prefs.getInt('stars_level_$level') ?? 0;
+    if (stars > currentStars) {
+      await prefs.setInt('stars_level_$level', stars);
+    }
+  }
+
+  /// Devuelve la cantidad de estrellas guardadas para un nivel
+  Future<int> getStarsForLevel(int level) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('stars_level_$level') ?? 0;
+  }
 }
