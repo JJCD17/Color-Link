@@ -13,15 +13,18 @@ class GameBoard extends StatefulWidget {
   final int level;
   final int gridSizeRow;
   final int gridSizeCol;
-
   final int time;
+  final int minMoves;
+  final int movimientos;
 
-  const GameBoard({
+  GameBoard({
     super.key,
     required this.level,
     required this.gridSizeRow,
     required this.gridSizeCol,
     required this.time,
+    required this.minMoves,
+    required this.movimientos,
   });
 
   @override
@@ -36,10 +39,13 @@ class GameBoardState extends State<GameBoard> {
 
   late List<List<PointData>> grid;
   late List<List<PointData>> referenceGrid;
-
   late int maxAllowedMoves;
+  late int movimientosTotales;
 
   List<PointData> selectedPoints = [];
+  // Guarda los movimientos realizados en una lista para que el jugador pueda revertirlos
+  final List<Point> performedMoves = [];
+
   final List<Color> availableColors = [
     Colors.red,
     Colors.blue,
@@ -55,8 +61,8 @@ class GameBoardState extends State<GameBoard> {
   @override
   void initState() {
     super.initState();
-
-    maxAllowedMoves = _getShuffleMovesForLevel(widget.level);
+    maxAllowedMoves = widget.minMoves;
+    movimientosTotales = widget.movimientos;
 
     // Paso 1: Genera la referencia final del puzzle
     referenceGrid = _generateReferenceGridForLevel(
@@ -65,7 +71,7 @@ class GameBoardState extends State<GameBoard> {
       widget.gridSizeCol,
     );
 
-    // Paso 2: Crea una copia profunda para mezclarla
+    // Paso 2: Crea una copia para mezclarla
     grid = List.generate(widget.gridSizeRow, (row) {
       return List.generate(widget.gridSizeCol, (col) {
         return PointData(
@@ -79,23 +85,20 @@ class GameBoardState extends State<GameBoard> {
     });
 
     // Paso 3: Mezcla el grid que usará el jugador (NO el de referencia)
-    final shuffleMoves = _getShuffleMovesForLevel(widget.level);
-    _shuffleGrid(grid, shuffleMoves);
+    _shuffleGrid(grid, widget.minMoves);
 
     // Inicia automáticamente después de 5 segundos
     Future.delayed(Duration(seconds: 5), () {
       if (mounted) {
-        setState(() => gameStarted = true);
+        setState(() {
+          gameStarted = true;
+          isCountdownActive = false;
+        });
         timerKey.currentState?.startTimer();
       }
     });
 
     _debugNullCount();
-  }
-
-  int _getShuffleMovesForLevel(int level) {
-    // Por ejemplo, empezamos en 5 y subimos 10 por nivel
-    return 5 + (level - 1) * 10;
   }
 
   PointData _findEmptyCell() {
@@ -194,7 +197,7 @@ class GameBoardState extends State<GameBoard> {
     }
   }
 
-// Función de debug para verificar `null`s
+  // Función de debug para verificar `null`s
   void _debugNullCount() {
     int count = 0;
     for (var row in grid) {
@@ -247,6 +250,7 @@ class GameBoardState extends State<GameBoard> {
 
   void _navigateToEndGame() {
     int elapsedTime = timerKey.currentState?.currentTime ?? 0;
+    print('Enviando a EndGame minMoves: ${widget.minMoves}');
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -255,6 +259,8 @@ class GameBoardState extends State<GameBoard> {
           rows: widget.gridSizeRow,
           cols: widget.gridSizeCol,
           time: elapsedTime,
+          minMoves: widget.minMoves,
+          movimientos: movimientosTotales,
         ),
       ),
     );
@@ -349,12 +355,7 @@ class GameBoardState extends State<GameBoard> {
             'Nivel ${widget.level}',
           ),
           centerTitle: true,
-          titleTextStyle: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
         ),
-        backgroundColor: const Color.fromARGB(255, 36, 36, 36),
         body: LayoutBuilder(
           builder: (context, constraints) {
             final totalHeight = constraints.maxHeight;
@@ -396,8 +397,7 @@ class GameBoardState extends State<GameBoard> {
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.yellow
-                                  .withOpacity(0.5), // Ajuste correcto
+                              color: Colors.yellow.withOpacity(0.5),
                               blurRadius: 8,
                               offset: Offset(0, 3),
                             ),
@@ -417,7 +417,7 @@ class GameBoardState extends State<GameBoard> {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Max: $maxAllowedMoves', // Asegúrate de tener esta variable
+                              'Max: $maxAllowedMoves Tot: $movimientosTotales',
                               style: TextStyle(
                                 color: Colors.yellow,
                                 fontSize: 18,
@@ -539,6 +539,7 @@ class GameBoardState extends State<GameBoard> {
                                             grid[emptyCell.row][emptyCell.col]
                                                 .color = tappedPoint.color;
                                             grid[row][col].color = null;
+                                            movimientosTotales++;
                                           });
                                         }
                                         // Verifica si ganó
