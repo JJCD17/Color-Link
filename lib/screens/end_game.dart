@@ -116,6 +116,8 @@ class _EndGameScreenState extends State<EndGameScreen> {
                     'time': widget.time,
                     'rows': widget.rows,
                     'cols': widget.cols,
+                    'minMoves': widget.minMoves,
+                    'movimientos': 0,
                   };
 
                   navigateToGame(context, levelData);
