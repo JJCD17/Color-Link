@@ -15,55 +15,76 @@ class _MenuScreenState extends State<MenuScreen> {
       'level': 1,
       'rows': 3,
       'cols': 3,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 2,
       'rows': 3,
       'cols': 3,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 3,
       'rows': 3,
       'cols': 3,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 4,
       'rows': 3,
       'cols': 3,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 5,
       'rows': 3,
       'cols': 3,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 6,
       'rows': 4,
       'cols': 4,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 7,
       'rows': 4,
       'cols': 4,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 8,
       'rows': 4,
       'cols': 4,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 9,
       'rows': 4,
       'cols': 5,
+      'minMoves': 5,
+      'movimientos': 0,
     },
     {
       'level': 10,
       'rows': 4,
       'cols': 5,
+      'minMoves': 5,
+      'movimientos': 0,
     },
   ];
 
   Map<int, int> records = {};
+  Map<int, int> starsPerLevel = {};
 
   @override
   void initState() {
@@ -74,15 +95,19 @@ class _MenuScreenState extends State<MenuScreen> {
   Future<void> _loadRecords() async {
     final storage = GameStatsStorage();
     final Map<int, int> loadedRecords = {};
+    final Map<int, int> loadedStars = {};
 
     for (var level in levels) {
       int levelNumber = level['level'];
       int record = await storage.getRecordForLevel(levelNumber);
+      int stars = await storage.getStarsForLevel(levelNumber);
       loadedRecords[levelNumber] = record;
+      loadedStars[levelNumber] = stars;
     }
 
     setState(() {
-      records = loadedRecords;
+      records = loadedRecords; // records reales
+      starsPerLevel = loadedStars; // estrellas reales
     });
   }
 
@@ -109,7 +134,7 @@ class _MenuScreenState extends State<MenuScreen> {
             final levelNumber = level['level'];
 
             // Suponiendo que usas el record como número de estrellas (0 a 3)
-            final stars = (records[levelNumber] ?? 0).clamp(0, 3);
+            final stars = (starsPerLevel[levelNumber] ?? 0).clamp(0, 3);
 
             return _LevelGridTile(
               level: level,
@@ -193,6 +218,8 @@ void navigateToGame(BuildContext context, Map<String, dynamic> level) {
         gridSizeRow: level['rows'],
         gridSizeCol: level['cols'],
         time: 0,
+        minMoves: level['minMoves'],
+        movimientos: level['movimientos'],
       ),
     ),
   );
