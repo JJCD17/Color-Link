@@ -9,6 +9,9 @@ import 'point_tile.dart';
 import 'dart:math';
 import '../screens/end_game.dart';
 
+//Niveles
+import '../levels/generateSimpleGrid.dart';
+
 class GameBoard extends StatefulWidget {
   final int level;
   final int gridSizeRow;
@@ -17,7 +20,7 @@ class GameBoard extends StatefulWidget {
   final int minMoves;
   final int movimientos;
 
-  GameBoard({
+  const GameBoard({
     super.key,
     required this.level,
     required this.gridSizeRow,
@@ -56,6 +59,13 @@ class GameBoardState extends State<GameBoard> {
     Colors.grey,
     Colors.yellow,
     Colors.tealAccent,
+    Colors.pink,
+    Colors.brown,
+    Colors.cyan,
+    Colors.indigo,
+    Colors.amber,
+    Colors.teal,
+    Colors.limeAccent
   ];
 
   @override
@@ -124,46 +134,23 @@ class GameBoardState extends State<GameBoard> {
     // Puedes usar un switch o ifs para definir niveles
     switch (level) {
       case 1:
-        return _generateSimpleGrid(rows, cols);
-      case 2:
-        return _generateSimpleGrid(rows, cols);
+        return generateSimpleGrid(
+            rows: rows, cols: cols, availableColors: availableColors);
       default:
-        return _generateSimpleGrid(rows, cols);
+        return generateSimpleGrid(
+            rows: rows, cols: cols, availableColors: availableColors);
     }
-  }
-
-  List<List<PointData>> _generateSimpleGrid(int rows, int cols) {
-    final random = Random();
-    final totalTiles = rows * cols;
-    final List<Color?> colors = [];
-
-    while (colors.length < totalTiles - 1) {
-      final color = availableColors[random.nextInt(availableColors.length)];
-      if (!colors.contains(color)) colors.add(color);
-    }
-
-    colors.add(null); // celda vacía
-
-    return List.generate(rows, (row) {
-      return List.generate(cols, (col) {
-        final index = row * cols + col;
-        return PointData(
-          row: row,
-          col: col,
-          color: colors[index],
-          isSelected: false,
-          isVisible: true,
-        );
-      });
-    });
   }
 
   void _shuffleGrid(List<List<PointData>> grid, int moves) {
-    // Encuentra la posición inicial del `null` (última celda)
     int nullRow = widget.gridSizeRow - 1;
     int nullCol = widget.gridSizeCol - 1;
 
+    // ⚠️ ESTO ES CLAVE: inicializa el `null` correctamente
+    grid[nullRow][nullCol].color = null;
+
     final random = Random();
+
     for (int i = 0; i < moves; i++) {
       final directions = [
         Point(-1, 0), // Arriba
@@ -172,7 +159,6 @@ class GameBoardState extends State<GameBoard> {
         Point(0, 1), // Derecha
       ];
 
-      // Filtra movimientos válidos
       final validDirections = directions.where((dir) {
         final newRow = nullRow + dir.x;
         final newCol = nullCol + dir.y;
@@ -184,14 +170,14 @@ class GameBoardState extends State<GameBoard> {
 
       if (validDirections.isEmpty) break;
 
-      // Elige un movimiento aleatorio
       final dir = validDirections[random.nextInt(validDirections.length)];
       final newRow = nullRow + dir.x;
       final newCol = nullCol + dir.y;
 
-      // Intercambio seguro: solo mueve el `null`, no crea uno nuevo
+      // Intercambio correcto
       grid[nullRow][nullCol].color = grid[newRow][newCol].color;
       grid[newRow][newCol].color = null;
+
       nullRow = newRow;
       nullCol = newCol;
     }
@@ -200,12 +186,15 @@ class GameBoardState extends State<GameBoard> {
   // Función de debug para verificar `null`s
   void _debugNullCount() {
     int count = 0;
-    for (var row in grid) {
-      for (var tile in row) {
-        if (tile.color == null) count++;
+    for (int row = 0; row < grid.length; row++) {
+      for (int col = 0; col < grid[row].length; col++) {
+        if (grid[row][col].color == null) {
+          print('Null encontrado en: ($row, $col)');
+          count++;
+        }
       }
     }
-    print('Nulls en grid: $count'); // Debe imprimir "1"
+    print('Total de nulls en grid: $count'); // Debe ser exactamente 1
   }
 
   void _handleWin() {
@@ -250,7 +239,6 @@ class GameBoardState extends State<GameBoard> {
 
   void _navigateToEndGame() {
     int elapsedTime = timerKey.currentState?.currentTime ?? 0;
-    print('Enviando a EndGame minMoves: ${widget.minMoves}');
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -388,7 +376,7 @@ class GameBoardState extends State<GameBoard> {
                       ),
                       const SizedBox(width: 20),
                       Container(
-                        width: 165,
+                        width: 180,
                         height: 100,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 15),
@@ -455,6 +443,17 @@ class GameBoardState extends State<GameBoard> {
                     },
                   ),
                 ),
+                SizedBox(height: 20),
+                if (widget.level == 1)
+                  Text(
+                    'Haz clic en las casillas para moverlas al espacio vacío hasta completar el patrón del tablero de referencia. Tienes un máximo de movimientos para obtener 3 estrellas y tiempo que muestra cuánto tardaste en completar el nivel.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 SizedBox(height: 20),
                 //Game board
                 Expanded(
