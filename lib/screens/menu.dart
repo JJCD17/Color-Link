@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/game_board.dart';
 import '../models/game_stats_storage.dart';
+import '../models/level_config.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -10,77 +11,17 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  final List<Map<String, dynamic>> levels = const [
-    {
-      'level': 1,
-      'rows': 3,
-      'cols': 3,
-      'minMoves': 5,
-      'movimientos': 0,
-    },
-    {
-      'level': 2,
-      'rows': 3,
-      'cols': 3,
-      'minMoves': 6,
-      'movimientos': 0,
-    },
-    {
-      'level': 3,
-      'rows': 3,
-      'cols': 3,
-      'minMoves': 7,
-      'movimientos': 0,
-    },
-    {
-      'level': 4,
-      'rows': 3,
-      'cols': 3,
-      'minMoves': 8,
-      'movimientos': 0,
-    },
-    {
-      'level': 5,
-      'rows': 3,
-      'cols': 3,
-      'minMoves': 9,
-      'movimientos': 0,
-    },
-    {
-      'level': 6,
-      'rows': 4,
-      'cols': 4,
-      'minMoves': 15,
-      'movimientos': 0,
-    },
-    {
-      'level': 7,
-      'rows': 4,
-      'cols': 4,
-      'minMoves': 20,
-      'movimientos': 0,
-    },
-    {
-      'level': 8,
-      'rows': 4,
-      'cols': 4,
-      'minMoves': 25,
-      'movimientos': 0,
-    },
-    {
-      'level': 9,
-      'rows': 4,
-      'cols': 4,
-      'minMoves': 30,
-      'movimientos': 0,
-    },
-    {
-      'level': 10,
-      'rows': 4,
-      'cols': 4,
-      'minMoves': 35,
-      'movimientos': 0,
-    },
+  static const List<LevelConfig> levels = [
+    LevelConfig(level: 1, rows: 3, cols: 3, minMoves: 5),
+    LevelConfig(level: 2, rows: 3, cols: 3, minMoves: 6),
+    LevelConfig(level: 3, rows: 3, cols: 3, minMoves: 7),
+    LevelConfig(level: 4, rows: 3, cols: 3, minMoves: 8),
+    LevelConfig(level: 5, rows: 3, cols: 3, minMoves: 9),
+    LevelConfig(level: 6, rows: 4, cols: 4, minMoves: 15),
+    LevelConfig(level: 7, rows: 4, cols: 4, minMoves: 20),
+    LevelConfig(level: 8, rows: 4, cols: 4, minMoves: 25),
+    LevelConfig(level: 9, rows: 4, cols: 4, minMoves: 30),
+    LevelConfig(level: 10, rows: 4, cols: 4, minMoves: 35),
   ];
 
   Map<int, int> records = {};
@@ -97,14 +38,15 @@ class _MenuScreenState extends State<MenuScreen> {
     final Map<int, int> loadedRecords = {};
     final Map<int, int> loadedStars = {};
 
-    for (var level in levels) {
-      int levelNumber = level['level'];
-      int record = await storage.getRecordForLevel(levelNumber);
-      int stars = await storage.getStarsForLevel(levelNumber);
+    for (final level in levels) {
+      final levelNumber = level.level;
+      final record = await storage.getRecordForLevel(levelNumber);
+      final stars = await storage.getStarsForLevel(levelNumber);
       loadedRecords[levelNumber] = record;
       loadedStars[levelNumber] = stars;
     }
 
+    if (!mounted) return;
     setState(() {
       records = loadedRecords; // records reales
       starsPerLevel = loadedStars; // estrellas reales
@@ -131,7 +73,7 @@ class _MenuScreenState extends State<MenuScreen> {
           itemCount: levels.length,
           itemBuilder: (context, index) {
             final level = levels[index];
-            final levelNumber = level['level'];
+            final levelNumber = level.level;
 
             // Suponiendo que usas el record como número de estrellas (0 a 3)
             final stars = (starsPerLevel[levelNumber] ?? 0).clamp(0, 3);
@@ -149,7 +91,7 @@ class _MenuScreenState extends State<MenuScreen> {
 }
 
 class _LevelGridTile extends StatelessWidget {
-  final Map<String, dynamic> level;
+  final LevelConfig level;
   final int stars;
   final VoidCallback onPressed;
 
@@ -182,14 +124,13 @@ class _LevelGridTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Text(
-                'Nivel ${level['level']}',
-                style: TextStyle(
+                'Nivel ${level.level}',
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: level['color'],
                 ),
               ),
-              if (level['level'] == 1)
+              if (level.level == 1)
                 const Text(
                   'Tutorial',
                   style: TextStyle(
@@ -209,17 +150,17 @@ class _LevelGridTile extends StatelessWidget {
   }
 }
 
-void navigateToGame(BuildContext context, Map<String, dynamic> level) {
+void navigateToGame(BuildContext context, LevelConfig level) {
   Navigator.push(
     context,
     MaterialPageRoute(
       builder: (_) => GameBoard(
-        level: level['level'],
-        gridSizeRow: level['rows'],
-        gridSizeCol: level['cols'],
+        level: level.level,
+        gridSizeRow: level.rows,
+        gridSizeCol: level.cols,
         time: 0,
-        minMoves: level['minMoves'],
-        movimientos: level['movimientos'],
+        minMoves: level.minMoves,
+        movimientos: level.movimientos,
       ),
     ),
   );

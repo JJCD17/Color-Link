@@ -45,11 +45,12 @@ class GameBoardState extends State<GameBoard> {
   late int maxAllowedMoves;
   late int movimientosTotales;
 
-  List<PointData> selectedPoints = [];
-  // Guarda los movimientos realizados en una lista para que el jugador pueda revertirlos
-  final List<Point> performedMoves = [];
+  // Posición actual de la celda vacía (se actualiza en cada movimiento para
+  // evitar recorrer todo el grid en cada toque).
+  late int emptyRow;
+  late int emptyCol;
 
-  final List<Color> availableColors = [
+  static const List<Color> availableColors = [
     Colors.red,
     Colors.blue,
     Colors.green,
@@ -98,7 +99,7 @@ class GameBoardState extends State<GameBoard> {
     _shuffleGrid(grid, widget.minMoves);
 
     // Inicia automáticamente después de 5 segundos
-    Future.delayed(Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() {
           gameStarted = true;
@@ -107,26 +108,11 @@ class GameBoardState extends State<GameBoard> {
         timerKey.currentState?.startTimer();
       }
     });
-
-    _debugNullCount();
   }
 
-  PointData _findEmptyCell() {
-    for (int row = 0; row < widget.gridSizeRow; row++) {
-      for (int col = 0; col < widget.gridSizeCol; col++) {
-        if (grid[row][col].color == null) {
-          return grid[row][col];
-        }
-      }
-    }
-    throw Exception('No empty cell found!');
-  }
-
-  bool _isAdjacent(int row, int col, PointData emptyCell) {
-    return (row == emptyCell.row &&
-            (col == emptyCell.col - 1 || col == emptyCell.col + 1)) ||
-        (col == emptyCell.col &&
-            (row == emptyCell.row - 1 || row == emptyCell.row + 1));
+  bool _isAdjacent(int row, int col) {
+    return (row == emptyRow && (col == emptyCol - 1 || col == emptyCol + 1)) ||
+        (col == emptyCol && (row == emptyRow - 1 || row == emptyRow + 1));
   }
 
   List<List<PointData>> _generateReferenceGridForLevel(
@@ -142,6 +128,13 @@ class GameBoardState extends State<GameBoard> {
     }
   }
 
+  static const List<Point<int>> _directions = [
+    Point(-1, 0), // Arriba
+    Point(1, 0), // Abajo
+    Point(0, -1), // Izquierda
+    Point(0, 1), // Derecha
+  ];
+
   void _shuffleGrid(List<List<PointData>> grid, int moves) {
     int nullRow = widget.gridSizeRow - 1;
     int nullCol = widget.gridSizeCol - 1;
@@ -152,14 +145,7 @@ class GameBoardState extends State<GameBoard> {
     final random = Random();
 
     for (int i = 0; i < moves; i++) {
-      final directions = [
-        Point(-1, 0), // Arriba
-        Point(1, 0), // Abajo
-        Point(0, -1), // Izquierda
-        Point(0, 1), // Derecha
-      ];
-
-      final validDirections = directions.where((dir) {
+      final validDirections = _directions.where((dir) {
         final newRow = nullRow + dir.x;
         final newCol = nullCol + dir.y;
         return newRow >= 0 &&
@@ -181,20 +167,10 @@ class GameBoardState extends State<GameBoard> {
       nullRow = newRow;
       nullCol = newCol;
     }
-  }
 
-  // Función de debug para verificar `null`s
-  void _debugNullCount() {
-    int count = 0;
-    for (int row = 0; row < grid.length; row++) {
-      for (int col = 0; col < grid[row].length; col++) {
-        if (grid[row][col].color == null) {
-          print('Null encontrado en: ($row, $col)');
-          count++;
-        }
-      }
-    }
-    print('Total de nulls en grid: $count'); // Debe ser exactamente 1
+    // Guarda la posición final de la celda vacía.
+    emptyRow = nullRow;
+    emptyCol = nullCol;
   }
 
   void _handleWin() {
@@ -385,9 +361,9 @@ class GameBoardState extends State<GameBoard> {
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.yellow.withOpacity(0.5),
+                              color: Colors.yellow.withValues(alpha: 0.5),
                               blurRadius: 8,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -395,7 +371,7 @@ class GameBoardState extends State<GameBoard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
+                            const Text(
                               'Movimientos',
                               style: TextStyle(
                                 color: Colors.white,
@@ -403,7 +379,7 @@ class GameBoardState extends State<GameBoard> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Max: $maxAllowedMoves Tot: $movimientosTotales',
                               style: TextStyle(
@@ -424,7 +400,7 @@ class GameBoardState extends State<GameBoard> {
                   height: widget.gridSizeRow * 40,
                   child: GridView.builder(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: widget.gridSizeCol,
                     ),
@@ -433,7 +409,7 @@ class GameBoardState extends State<GameBoard> {
                       final row = index ~/ widget.gridSizeCol;
                       final col = index % widget.gridSizeCol;
                       return Container(
-                        margin: EdgeInsets.all(1),
+                        margin: const EdgeInsets.all(1),
                         decoration: BoxDecoration(
                           color: referenceGrid[row][col].color,
                           border: Border.all(color: Colors.grey[800]!),
@@ -443,9 +419,9 @@ class GameBoardState extends State<GameBoard> {
                     },
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 if (widget.level == 1)
-                  Text(
+                  const Text(
                     'Haz clic en las casillas para moverlas al espacio vacío hasta completar el patrón del tablero de referencia. Tienes un máximo de movimientos para obtener 3 estrellas y tiempo que muestra cuánto tardaste en completar el nivel.',
                     style: TextStyle(
                       color: Colors.white,
@@ -454,7 +430,7 @@ class GameBoardState extends State<GameBoard> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 //Game board
                 Expanded(
                   child: !gameStarted
@@ -466,12 +442,12 @@ class GameBoardState extends State<GameBoard> {
                                 // Tablero vacío
                                 GridView.count(
                                   shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
+                                  physics: const NeverScrollableScrollPhysics(),
                                   crossAxisCount: widget.gridSizeCol,
                                   children: List.generate(
                                     widget.gridSizeRow * widget.gridSizeCol,
                                     (index) => Container(
-                                      margin: EdgeInsets.all(2),
+                                      margin: const EdgeInsets.all(2),
                                       decoration: BoxDecoration(
                                         border: Border.all(
                                           color: Colors.grey[800]!,
@@ -492,7 +468,7 @@ class GameBoardState extends State<GameBoard> {
                                   backgroundColor:
                                       const Color.fromARGB(54, 0, 0, 0),
                                   strokeWidth: 8,
-                                  textStyle: TextStyle(
+                                  textStyle: const TextStyle(
                                     fontSize: 50,
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -531,19 +507,21 @@ class GameBoardState extends State<GameBoard> {
                                         if (tappedPoint.color == null) return;
 
                                         // Verificar si la celda seleccionada es adyacente a la vacía
-                                        final emptyCell = _findEmptyCell();
-                                        if (_isAdjacent(row, col, emptyCell)) {
+                                        if (_isAdjacent(row, col)) {
                                           setState(() {
                                             // Mover la pieza hacia la vacía
-                                            grid[emptyCell.row][emptyCell.col]
-                                                .color = tappedPoint.color;
+                                            grid[emptyRow][emptyCol].color =
+                                                tappedPoint.color;
                                             grid[row][col].color = null;
+                                            // La celda tocada pasa a ser la vacía
+                                            emptyRow = row;
+                                            emptyCol = col;
                                             movimientosTotales++;
                                           });
-                                        }
-                                        // Verifica si ganó
-                                        if (areGridsEqual()) {
-                                          _handleWin();
+                                          // Verifica si ganó
+                                          if (areGridsEqual()) {
+                                            _handleWin();
+                                          }
                                         }
                                       },
                                       // Widget que representa visualmente cada punto

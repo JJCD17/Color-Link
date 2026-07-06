@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/game_stats_storage.dart';
+import '../models/level_config.dart';
 import '../screens/menu.dart';
+import '../utils/timer_formatter.dart';
 
 class EndGameScreen extends StatefulWidget {
   final int level;
@@ -32,16 +34,14 @@ class _EndGameScreenState extends State<EndGameScreen> {
   void initState() {
     super.initState();
     estrellas = calcularEstrellas(widget.movimientos, widget.minMoves);
-    print('Nivel: ${widget.level}');
-    print('minMoves recibido: ${widget.minMoves}');
-    print('movimientos hechos: ${widget.movimientos}');
     _loadHighScore();
     _guardarEstrellas();
   }
 
   Future<void> _loadHighScore() async {
-    int storedHighScore =
+    final storedHighScore =
         await GameStatsStorage().getRecordForLevel(widget.level);
+    if (!mounted) return;
     setState(() => highScore = storedHighScore);
   }
 
@@ -63,18 +63,7 @@ class _EndGameScreenState extends State<EndGameScreen> {
     final estrellasPrevias = await storage.getStarsForLevel(widget.level);
     if (estrellas > estrellasPrevias) {
       await storage.saveStarsForLevel(widget.level, estrellas);
-      print('⭐ Estrellas actualizadas: $estrellas');
-    } else {
-      print(
-          '↪️ Estrellas previas ($estrellasPrevias) son mejores o iguales. No se actualiza.');
     }
-  }
-
-  // Nueva función auxiliar
-  String formatTime(int seconds) {
-    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
-    final remainingSeconds = (seconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$remainingSeconds';
   }
 
   @override
@@ -111,14 +100,12 @@ class _EndGameScreenState extends State<EndGameScreen> {
             Column(
               children: [
                 _buildActionButton("Intentar de nuevo", () {
-                  final levelData = {
-                    'level': widget.level,
-                    'time': widget.time,
-                    'rows': widget.rows,
-                    'cols': widget.cols,
-                    'minMoves': widget.minMoves,
-                    'movimientos': 0,
-                  };
+                  final levelData = LevelConfig(
+                    level: widget.level,
+                    rows: widget.rows,
+                    cols: widget.cols,
+                    minMoves: widget.minMoves,
+                  );
 
                   navigateToGame(context, levelData);
                 }, Icons.replay, Colors.blue, isOutlined: true),

@@ -125,7 +125,7 @@ class TimerWidgetState extends State<TimerWidget> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.4),
+            color: Colors.cyanAccent.withValues(alpha: 0.4),
             blurRadius: 12,
             spreadRadius: 1,
             offset: const Offset(0, 3),
