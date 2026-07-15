@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/timer_formatter.dart';
 import '../widgets/game_board.dart';
 import '../models/game_stats_storage.dart';
 import '../models/level_config.dart';
@@ -26,6 +27,8 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Map<int, int> records = {};
   Map<int, int> starsPerLevel = {};
+  Map<int, int?> levelTimes = {};
+  Map<int, int?> levelMoves = {};
 
   @override
   void initState() {
@@ -37,19 +40,27 @@ class _MenuScreenState extends State<MenuScreen> {
     final storage = GameStatsStorage();
     final Map<int, int> loadedRecords = {};
     final Map<int, int> loadedStars = {};
+    final Map<int, int?> loadedTimes = {};
+    final Map<int, int?> loadedMoves = {};
 
     for (final level in levels) {
       final levelNumber = level.level;
       final record = await storage.getRecordForLevel(levelNumber);
       final stars = await storage.getStarsForLevel(levelNumber);
+      final time = await storage.getTimeForLevel(levelNumber);
+      final moves = await storage.getMovesForLevel(levelNumber);
       loadedRecords[levelNumber] = record;
       loadedStars[levelNumber] = stars;
+      loadedTimes[levelNumber] = time;
+      loadedMoves[levelNumber] = moves;
     }
 
     if (!mounted) return;
     setState(() {
       records = loadedRecords; // records reales
       starsPerLevel = loadedStars; // estrellas reales
+      levelTimes = loadedTimes;
+      levelMoves = loadedMoves;
     });
   }
 
@@ -74,6 +85,8 @@ class _MenuScreenState extends State<MenuScreen> {
           itemBuilder: (context, index) {
             final level = levels[index];
             final levelNumber = level.level;
+            final time = levelTimes[levelNumber];
+            final moves = levelMoves[levelNumber];
 
             // Suponiendo que usas el record como número de estrellas (0 a 3)
             final stars = (starsPerLevel[levelNumber] ?? 0).clamp(0, 3);
@@ -81,6 +94,8 @@ class _MenuScreenState extends State<MenuScreen> {
             return _LevelGridTile(
               level: level,
               stars: stars,
+              time: time,
+              completedMoves: moves,
               onPressed: () => navigateToGame(context, level),
             );
           },
@@ -93,11 +108,15 @@ class _MenuScreenState extends State<MenuScreen> {
 class _LevelGridTile extends StatelessWidget {
   final LevelConfig level;
   final int stars;
+  final int? time;
+  final int? completedMoves;
   final VoidCallback onPressed;
 
   const _LevelGridTile({
     required this.level,
     required this.stars,
+    this.time,
+    this.completedMoves,
     required this.onPressed,
   });
 
@@ -138,6 +157,61 @@ class _LevelGridTile extends StatelessWidget {
                     color: Colors.grey,
                   ),
                 ),
+              if (time != null && completedMoves != null)
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.timer,
+                          color: Colors.blueAccent,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          formatTime(time!),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(
+                          Icons.touch_app,
+                          color: Colors.orangeAccent,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${completedMoves!} de ${level.minMoves} movimientos',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Nivel completado',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green[300],
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Text(
+                  'Sin completar aún',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: _buildStars(stars),

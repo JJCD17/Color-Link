@@ -35,7 +35,7 @@ class _EndGameScreenState extends State<EndGameScreen> {
     super.initState();
     estrellas = calcularEstrellas(widget.movimientos, widget.minMoves);
     _loadHighScore();
-    _guardarEstrellas();
+    _guardarEstadisticas();
   }
 
   Future<void> _loadHighScore() async {
@@ -58,8 +58,11 @@ class _EndGameScreenState extends State<EndGameScreen> {
     return 0;
   }
 
-  Future<void> _guardarEstrellas() async {
+  Future<void> _guardarEstadisticas() async {
     final storage = GameStatsStorage();
+    await storage.saveTimeForLevel(widget.level, widget.time);
+    await storage.saveMovesForLevel(widget.level, widget.movimientos);
+
     final estrellasPrevias = await storage.getStarsForLevel(widget.level);
     if (estrellas > estrellasPrevias) {
       await storage.saveStarsForLevel(widget.level, estrellas);
